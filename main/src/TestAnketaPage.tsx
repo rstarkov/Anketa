@@ -1,8 +1,6 @@
 import { Button, Unstable_Grid2 as Grid2 } from "@mui/material";
 import { DateTime } from "luxon";
-import { useState } from "react";
 import { AnkTextField, ankFormatAmount, ankFormatText, useAnkValue } from "~/ui/Anketa";
-import { DateTextField } from "~/ui/DateTextField";
 import { Header2, HeaderPage, PageContainer, PageWidth } from "~/ui/standard";
 import { unreachable } from "~/util/misc";
 
@@ -17,9 +15,7 @@ function strTestVal(v: undefined | null | number | string | boolean | DateTime):
 }
 
 export function TestAnketaPage(): JSX.Element {
-    const [dtfDate, dtfSetDate] = useState<DateTime>();
-
-    const textReq = useAnkValue("", ankFormatText);
+    const textReq = useAnkValue(null, ankFormatText);
     const amountReq = useAnkValue(null, ankFormatAmount);
 
     const initialAmount1 = useAnkValue(23.7, ankFormatAmount);
@@ -27,9 +23,6 @@ export function TestAnketaPage(): JSX.Element {
     const initialText1 = useAnkValue(null, ankFormatText);
     const initialText2 = useAnkValue("  foo ", ankFormatText);
 
-    function clickSubmit() {
-        //???
-    }
     function clickSet1() {
         textReq.setValue(" req  txt  ");
         amountReq.setValue(47.2);
@@ -44,27 +37,18 @@ export function TestAnketaPage(): JSX.Element {
     }
 
     return <PageContainer><PageWidth>
-        <HeaderPage>Test Two</HeaderPage>
+        <HeaderPage>Test Anketa</HeaderPage>
 
-        <Header2>Anketa</Header2>
+        <Header2>Edit behaviours</Header2>
         <Grid2 container spacing="1rem" alignItems="center">
             <Grid2 ph={3} data-testid="ank-amount-req-inp"><AnkTextField ank={amountReq} label="Ank Amount Req" size="small" fullWidth /></Grid2>
             <Grid2 ph={3} data-testid="ank-amount-req-trueval">{strTestVal(amountReq.value)}</Grid2>
-            <Grid2 ph={3} data-testid="ank-amount-req-trueerr">{strTestVal(amountReq.error)}</Grid2>
-            <Grid2 ph={3} data-testid="ank-amount-req-submval"></Grid2>
+            <Grid2 ph={6} data-testid="ank-amount-req-trueerr">{strTestVal(amountReq.error)}</Grid2>
 
             <Grid2 ph={3} data-testid="ank-text-req-inp"><AnkTextField ank={textReq} label="Ank Text Req" size="small" fullWidth /></Grid2>
             <Grid2 ph={3} data-testid="ank-text-req-trueval">{strTestVal(textReq.value)}</Grid2>
-            <Grid2 ph={3} data-testid="ank-text-req-trueerr">{strTestVal(textReq.error)}</Grid2>
-            <Grid2 ph={3} data-testid="ank-text-req-submval"></Grid2>
+            <Grid2 ph={6} data-testid="ank-text-req-trueerr">{strTestVal(textReq.error)}</Grid2>
 
-            <Grid2 ph={3}><DateTextField date={dtfDate} setDate={dtfSetDate} label="Date Text Field" size="small" fullWidth /></Grid2>
-            <Grid2 ph={3}>{strTestVal(dtfDate)}</Grid2>
-            <Grid2 ph={6}></Grid2>
-
-            <Grid2 ph={12} data-testid="submit-status">{undefined ? "Submit accepted" : "Not yet submitted"}</Grid2>
-
-            <Grid2 ph={3}><Button onClick={clickSubmit} data-testid="submit" variant="contained" fullWidth>Submit</Button></Grid2>
             <Grid2 ph={3}><Button onClick={clickSet1} data-testid="set1" variant="contained" fullWidth>Set 1</Button></Grid2>
             <Grid2 ph={3}><Button onClick={clickSet2} data-testid="set2" variant="contained" fullWidth>Set 2</Button></Grid2>
             <Grid2 ph={3}><Button onClick={clickClear} data-testid="clear" variant="contained" fullWidth>Clear</Button></Grid2>

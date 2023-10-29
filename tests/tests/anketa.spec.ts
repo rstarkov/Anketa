@@ -12,9 +12,11 @@ async function checkAnkTextbox(page: Page, testid: string, raw: string, trueval:
         await expect(page.getByTestId(`${testid}-inp`).locator("p.MuiFormHelperText-root")).toBeVisible();
         await expect(page.getByTestId(`${testid}-inp`).locator("p.MuiFormHelperText-root")).toHaveText(error);
     }
+
+    // TODO? blur+focus+blur must never change any of the values because the values should already all be up-to-date
 }
 
-test("AnkNumberField @anketa", async ({ page }) => {
+test("AnkTextField initial values @anketa", async ({ page }) => {
     await page.goto("/test/anketa");
 
     // Initial values as passed into useAnk
@@ -22,20 +24,24 @@ test("AnkNumberField @anketa", async ({ page }) => {
     await checkAnkTextbox(page, "ank-initial-amount-2", "23.701", "number: 23.701", "No more than 2 digits for pence.");
     await checkAnkTextbox(page, "ank-initial-text-1", "", "string: ", undefined);
     await checkAnkTextbox(page, "ank-initial-text-2", "foo", "string: foo", undefined);
+});
+
+test("AnkTextField basic user editing @anketa", async ({ page }) => {
+    await page.goto("/test/anketa");
+    const tbAmountReq = page.getByTestId("ank-amount-req-inp").getByRole("textbox");
+    const tbTextReq = page.getByTestId("ank-text-req-inp").getByRole("textbox");
 
     // Reset, check empty
     await page.getByTestId("clear").click();
     await checkAnkTextbox(page, "ank-amount-req", "", "<undefined>", undefined);
     await checkAnkTextbox(page, "ank-text-req", "", "string: ", undefined); // empty value expected instead of <undefined> to maintain the invariant of focus+blur = no change
     // Check valid number and format fixup
-    const tbAmountReq = page.getByTestId("ank-amount-req-inp").getByRole("textbox");
     await tbAmountReq.focus();
     await tbAmountReq.fill("123.4");
     await checkAnkTextbox(page, "ank-amount-req", "123.4", "<undefined>", undefined);
     await tbAmountReq.blur();
     await checkAnkTextbox(page, "ank-amount-req", "123.40", "number: 123.4", undefined);
     // Check valid text and format fixup (trimming)
-    const tbTextReq = page.getByTestId("ank-text-req-inp").getByRole("textbox");
     await tbTextReq.focus();
     await tbTextReq.fill(" foobar  ");
     await tbTextReq.blur();
@@ -60,6 +66,12 @@ test("AnkNumberField @anketa", async ({ page }) => {
     await tbAmountReq.fill("25.5100");
     await tbAmountReq.blur();
     await checkAnkTextbox(page, "ank-amount-req", "25.51", "number: 25.51", undefined);
+});
+
+test("AnkTextField programmatic editing @anketa", async ({ page }) => {
+    await page.goto("/test/anketa");
+    const tbAmountReq = page.getByTestId("ank-amount-req-inp").getByRole("textbox");
+    const tbTextReq = page.getByTestId("ank-text-req-inp").getByRole("textbox");
 
     // Check Reset works
     await page.getByTestId("clear").click();
@@ -93,11 +105,9 @@ test("AnkNumberField @anketa", async ({ page }) => {
     await tbTextReq.fill("  foo ");
     await tbTextReq.blur();
     await checkAnkTextbox(page, "ank-text-req", "foo", "string: foo", undefined);
-
-    // test suppress error
-    // test submit invalid with suppressed errors
-
-    // maybe test? focus+blur must never change any of the values because the values should already all be up-to-date
-
-    //await page.screenshot({ path: "foo1.png" });
 });
+
+// test suppress error
+// test submit invalid with suppressed errors
+
+//await page.screenshot({ path: "foo1.png" });
