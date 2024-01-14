@@ -16,10 +16,12 @@ type TransformerFunc<TValue, TRaw> = (state: ParseSerialise<TValue, TRaw>) => vo
 abstract class AnkFormat<TValue, TRaw, TRequired extends boolean> {
     private transformer: TransformerFunc<TValue, TRaw>;
     public readonly isRequired: TRequired;
+    public readonly empty: TRaw;
 
-    constructor(isRequired: TRequired) {
+    constructor(isRequired: TRequired, empty: TRaw) {
         this.transformer = s => { };
         this.isRequired = isRequired;
+        this.empty = empty;
     }
 
     protected extendWith(transformer: TransformerFunc<TValue, TRaw>): this {
@@ -71,7 +73,7 @@ export class ank {
 
 class StringAnkFormat<TRequired extends boolean> extends AnkFormat<string, string, TRequired> {
     constructor(isRequired: TRequired) {
-        super(isRequired);
+        super(isRequired, "");
     }
 
     // serialise(val: string): string {
@@ -100,7 +102,7 @@ class StringAnkFormat<TRequired extends boolean> extends AnkFormat<string, strin
 
 class NumberAnkFormat<TRequired extends boolean> extends AnkFormat<number, string, TRequired> {
     constructor(isRequired: TRequired) {
-        super(isRequired);
+        super(isRequired, "");
     }
 
     // serialise(val: number): string {
@@ -172,6 +174,7 @@ export type AnkValue<TValue, TRaw, TReq extends boolean = boolean> = {
     setFormat: (fmt: AnkFormat<TValue, TRaw, TReq>) => void;
     setValue: (val: TValue) => void;
     clear: () => void;
+    commitRaw: (raw: TRaw) => TRaw | undefined;
 };
 
 type AnkFormValues = {
@@ -219,8 +222,20 @@ export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TV
         internalSetError(ps.error);
         internalSetValue(ps.parsed);
     }
+    function commitRaw(raw: TRaw): TRaw | undefined {
+        var p = format.parse(raw);
+        if (p.error !== undefined)
+            internalSetError(p.error);
+        else if (p.parsed !== undefined) {
+            const ps = format.serialise(p.parsed);
+            internalSetError(ps.error);
+            internalSetValue(ps.parsed);
+            return ps.raw;
+        } else // both undefined, ie {}
+            clear();
+    }
     function clear() {
-        internalSetValue(format.empty);
+        internalSetValue(format.parse(format.empty).parsed);
         internalSetError(undefined);
     }
     return {
@@ -231,27 +246,17 @@ export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TV
         setFormat,
         /** Sets the control to a specific parsed value. The error is updated per validation rules. */
         setValue,
+        commitRaw,
         /** Resets the control to an empty value and clears the error, if any. */
         clear,
     };
 }
 
-function ankCommit<TValue, TRaw>(raw: TRaw, ank: AnkValue<TValue, TRaw>): TRaw | undefined {
-    var p = ank.format.parse(raw);
-    if (p.error !== undefined)
-        ank.setError(p.error);
-    else if (p.parsed !== undefined) {
-        ank.setValue(p.parsed);
-        return ank.format.serialise(p.parsed).raw;
-    } else // both undefined, ie {}
-        ank.clear();
+export interface AnkTextFieldProps<TValue, TReq extends boolean> extends React.ComponentProps<typeof TextField> {
+    ank: AnkValue<TValue, string, TReq>;
 }
 
-export interface AnkTextFieldProps<TValue> extends React.ComponentProps<typeof TextField> {
-    ank: AnkValue<TValue, string>;
-}
-
-export function AnkTextField<TValue>({ ank, ...rest }: AnkTextFieldProps<TValue>): JSX.Element {
+export function AnkTextField<TValue, TReq extends boolean>({ ank, ...rest }: AnkTextFieldProps<TValue, TReq>): JSX.Element {
     const [raw, setRaw] = useState(ank.value === undefined ? "" : ank.format.serialise(ank.value).raw);
     const [suppressError, setSuppressError] = useState(false);
 
@@ -280,7 +285,7 @@ export function AnkTextField<TValue>({ ank, ...rest }: AnkTextFieldProps<TValue>
         }
     }
     function commit() {
-        const newraw = ankCommit(raw, ank);
+        const newraw = ank.commitRaw(raw);
         if (newraw !== undefined)
             setRaw(newraw);
     }
@@ -288,3 +293,10 @@ export function AnkTextField<TValue>({ ank, ...rest }: AnkTextFieldProps<TValue>
     return <TextField {...rest} value={raw} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur} onKeyDown={handleKeyDown}
         error={!suppressError && !!ank.error} helperText={!suppressError && ank.error} />
 }
+
+// let x: AnkValue<string, string, true> = useAnkValue(null, ank.parseString().required());
+// let y: AnkValue<string, string, infer T> = x;
+// y = x; // should be possible!
+// let xx = x.setFormat;
+// let yy = y.setFormat;
+// yy = xx; // should be possible!

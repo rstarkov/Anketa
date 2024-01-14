@@ -2,7 +2,6 @@ import { Button, Unstable_Grid2 as Grid2 } from "@mui/material";
 import { DateTime } from "luxon";
 import { useEffect } from "react";
 import { AnkTextField, ank, useAnkValue } from "~/ui/Anketa";
-//import { AnkFormOf, AnkFormat, AnkTextField, ankFormValues, ankFormatAmount, ankFormatText, ankFormatTextRequired, useAnkValue } from "~/ui/Anketa";
 import { Header2, HeaderPage, PageContainer, PageWidth } from "~/ui/standard";
 import { unreachable } from "~/util/misc";
 
@@ -39,23 +38,23 @@ export function TestAnketaPage(): JSX.Element {
     const initialText1 = useAnkValue(null, fmtTextReq);
     const initialText2 = useAnkValue("  foo ", fmtTextReq);
 
-    useFormEffect(() => {
-        if (form.NumOpt.isValid() && !form.NumOpt.isEmpty())
-            form.NumVariable.setFormat(fmtAmount.max(form.NumReq.value, `Must be less than ${form.NumReq.value} (num req)`));
-        else
-            form.NumVariable.setFormat(fmtAmount);
+    // useFormEffect(() => {
+    //     if (form.NumOpt.isValid() && !form.NumOpt.isEmpty())
+    //         form.NumVariable.setFormat(fmtAmount.max(form.NumReq.value, `Must be less than ${form.NumReq.value} (num req)`));
+    //     else
+    //         form.NumVariable.setFormat(fmtAmount);
 
-        if (form.NumReq.isValid() && form.NumReq.value > 10)
-            form.TextVariable.setFormat(fmtTextReq);
-        else
-            form.TextVariable.setFormat(fmtText);
-    }, form);
+    //     if (form.NumReq.isValid() && form.NumReq.value > 10)
+    //         form.TextVariable.setFormat(fmtTextReq);
+    //     else
+    //         form.TextVariable.setFormat(fmtText);
+    // }, form);
 
     function clickSubmit() {
-        let val = ankFormValues(form);
-        if (val === undefined)
-            return;
-        alert("accept");
+        // let val = ankFormValues(form);
+        // if (val === undefined)
+        //     return;
+        // alert("accept");
     }
     function clickSet1() {
         textReq.setValue(" req  txt  ");
