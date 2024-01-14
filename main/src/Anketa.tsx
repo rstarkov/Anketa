@@ -162,14 +162,14 @@ class NumberAnkFormat<TRequired extends boolean> extends AnkFormat<number, strin
 }
 
 /* from yup - this seems to force TS to show the full type instead of all the wrapped generics. See also https://github.com/microsoft/vscode/issues/94679 and https://stackoverflow.com/a/57683652/2010616 */
-export type _<T> = T extends {} ? { [k in keyof T]: T[k] } : T;
+type _<T> = T extends {} ? { [k in keyof T]: T[k] } : T;
 
-export type AnkValue<TValue, TRaw, TRequired extends boolean = boolean> = {
-    format: AnkFormat<TValue, TRaw, boolean>;
+export type AnkValue<TValue, TRaw, TReq extends boolean = boolean> = {
+    format: AnkFormat<TValue, TRaw, TReq>;
     value: TValue | undefined;
     error: string | undefined;
-    required: TRequired;
-    setFormat: (fmt: AnkFormat<TValue, TRaw, boolean>) => void;
+    required: TReq;
+    setFormat: (fmt: AnkFormat<TValue, TRaw, TReq>) => void;
     setValue: (val: TValue) => void;
     clear: () => void;
 };
@@ -224,6 +224,7 @@ export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TV
         internalSetError(undefined);
     }
     return {
+        required: format.isRequired,
         format,
         value,
         error,
@@ -241,7 +242,7 @@ function ankCommit<TValue, TRaw>(raw: TRaw, ank: AnkValue<TValue, TRaw>): TRaw |
         ank.setError(p.error);
     else if (p.parsed !== undefined) {
         ank.setValue(p.parsed);
-        return ank.format.serialise(p.parsed);
+        return ank.format.serialise(p.parsed).raw;
     } else // both undefined, ie {}
         ank.clear();
 }
@@ -251,16 +252,13 @@ export interface AnkTextFieldProps<TValue> extends React.ComponentProps<typeof T
 }
 
 export function AnkTextField<TValue>({ ank, ...rest }: AnkTextFieldProps<TValue>): JSX.Element {
-    const [raw, setRaw] = useState(ank.value === undefined ? "" : ank.format.serialise(ank.value));
+    const [raw, setRaw] = useState(ank.value === undefined ? "" : ank.format.serialise(ank.value).raw);
     const [suppressError, setSuppressError] = useState(false);
-
-    // TODO: what if instead of responding to value changes, it only responded to ank.raw changes?
-    // Then the component doesn't care about value at all, and it's useAnkValue that takes care of that
 
     useEffect(() => {
         if (ank.value === undefined && ank.error !== undefined)
             return; // this looks like a format parse error, so don't update the value (we could only set it to empty anyhow)
-        setRaw(ank.value === undefined ? "" : ank.format.serialise(ank.value));
+        setRaw(ank.value === undefined ? "" : ank.format.serialise(ank.value).raw);
     }, [ank.value, ank.error]);
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {

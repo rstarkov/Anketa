@@ -1,7 +1,7 @@
 import { Button, Unstable_Grid2 as Grid2 } from "@mui/material";
 import { DateTime } from "luxon";
 import { useEffect } from "react";
-import { ank } from "~/ui/Anketa";
+import { AnkTextField, ank, useAnkValue } from "~/ui/Anketa";
 //import { AnkFormOf, AnkFormat, AnkTextField, ankFormValues, ankFormatAmount, ankFormatText, ankFormatTextRequired, useAnkValue } from "~/ui/Anketa";
 import { Header2, HeaderPage, PageContainer, PageWidth } from "~/ui/standard";
 import { unreachable } from "~/util/misc";
@@ -31,13 +31,13 @@ export function TestAnketaPage(): JSX.Element {
         NumVariable: useAnkValue(null, fmtAmount),
     };
 
-    const textReq = useAnkValue(null, ankFormatText);
-    const amountReq = useAnkValue(null, ankFormatAmount);
+    const textReq = useAnkValue(null, fmtTextReq);
+    const amountReq = useAnkValue(null, fmtAmountReq);
 
-    const initialAmount1 = useAnkValue(23.7, ankFormatAmount);
-    const initialAmount2 = useAnkValue(23.701, ankFormatAmount);
-    const initialText1 = useAnkValue(null, ankFormatText);
-    const initialText2 = useAnkValue("  foo ", ankFormatText);
+    const initialAmount1 = useAnkValue(23.7, fmtAmountReq);
+    const initialAmount2 = useAnkValue(23.701, fmtAmountReq);
+    const initialText1 = useAnkValue(null, fmtTextReq);
+    const initialText2 = useAnkValue("  foo ", fmtTextReq);
 
     useFormEffect(() => {
         if (form.NumOpt.isValid() && !form.NumOpt.isEmpty())
