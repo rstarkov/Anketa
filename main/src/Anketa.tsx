@@ -226,6 +226,12 @@ export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TV
     const [error, internalSetError] = useState<string | undefined>(initial.error);
     const [errorMode, internalSetErrorMode] = useState<AnkErrorMode>("dirty"); // later: config to use "initial" instead
 
+    function internalSetRawAndErrorMode(newraw: TRaw) {
+        if (newraw !== raw)
+            internalSetErrorMode("dirty");
+        internalSetRaw(newraw);
+    }
+
     function setFormat(fmt: AnkFormat<TValue, TRaw, TReq>) {
         internalSetFormat(fmt);
         const ps = fmt.parse(raw);
@@ -242,21 +248,23 @@ export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TV
     function commitRaw(newraw: TRaw): TRaw | undefined {
         var p = format.parse(newraw);
         if (p.error !== undefined) {
-            if (p.raw !== raw)
-                internalSetErrorMode("dirty");
-            internalSetError(p.error);
+            // we have some kind of an error - leave raw as the format returned it
+            internalSetRawAndErrorMode(p.raw);
             internalSetValue(p.parsed);
-            internalSetRaw(p.raw);
+            internalSetError(p.error);
         } else if (p.parsed !== undefined) {
+            // parsed to a non-empty value - re-serialise to fix up the raw value per the format
             const ps = format.serialise(p.parsed);
-            if (ps.raw !== raw)
-                internalSetErrorMode("dirty");
-            internalSetError(ps.error);
+            internalSetRawAndErrorMode(ps.raw);
             internalSetValue(ps.parsed);
-            internalSetRaw(ps.raw);
-            return ps.raw; // TODO <<<<<<<<<<<<<< how is the return value used?
-        } else // both undefined, ie {}
-            clear(); // TODO <<<<<<<<<<<<<< resets error mode - probably shouldn't?
+            internalSetError(ps.error);
+            return ps.raw;
+        } else {
+            // error and value are both undefined - this is an empty value but not exactly the same as "clear" due to error mode
+            internalSetRawAndErrorMode(format.empty);
+            internalSetValue(format.parse(format.empty).parsed);
+            internalSetError(undefined);
+        }
     }
     function clear() {
         internalSetRaw(format.empty);
@@ -313,8 +321,8 @@ export function AnkTextField<TValue, TReq extends boolean>({ ank, ...rest }: Ank
     }
     function commit() {
         const newraw = ank.commitRaw(raw);
-        if (newraw !== undefined) // TODO <<<<<<<<<<<<<< no longer necessary now that we respond to raw changes directly
-            setRaw(newraw);
+        if (newraw !== undefined)
+            setRaw(newraw); // this ensures that the raw value gets re-formatted per the format even if the parsed value didn't change
     }
 
     //const requiredError = ank.format.isRequired && ank.value === undefined;
