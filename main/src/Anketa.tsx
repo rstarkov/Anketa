@@ -4,10 +4,9 @@ import { isKey } from "~/util/misc";
 
 interface ParseSerialise<TValue, TRaw> {
     raw: TRaw;
-    parsed: TValue;
+    parsed: TValue | undefined;
     error?: string;
     isEmpty: boolean;
-    // isEmpty should probably know how to look at raw and decide if it's empty
     // could have fixup enable toggle here
 }
 
@@ -28,7 +27,7 @@ abstract class AnkFormat<TValue, TRaw, TRequired extends boolean> {
     protected set isRequired(value: TRequired) { this.#isRequired = value; }
 
     protected extendWith(transformer: TransformerFunc<TValue, TRaw>): this {
-        const extended = new (this.constructor as any)(this.required) as this;
+        const extended = new (this.constructor as any)(this.#isRequired) as this;
         for (const key in this)
             if (this.hasOwnProperty(key))
                 extended[key] = this[key];
@@ -56,7 +55,7 @@ abstract class AnkFormat<TValue, TRaw, TRequired extends boolean> {
     parse(raw: TRaw): ParseSerialise<TValue, TRaw> {
         const state: ParseSerialise<TValue, TRaw> = {
             raw,
-            parsed: raw as any, // TODO <<<<<<<<<<<<<<<<<<<<<<< the fix might be to make the parse stage not be a transformer
+            parsed: undefined,
             isEmpty: true,
         };
         this.#transformer(state);
@@ -97,7 +96,7 @@ class StringAnkFormat<TRequired extends boolean> extends AnkFormat<string, strin
 
     trim(): this {
         return this.extendWith(s => {
-            if (s.error !== undefined)
+            if (s.error !== undefined || s.parsed === undefined)
                 return;
             s.parsed = s.parsed.trim();
             s.raw = s.parsed; // no way to disable fixup
@@ -125,7 +124,7 @@ class NumberAnkFormat<TRequired extends boolean> extends AnkFormat<number, strin
             s.raw = s.raw.trim();
             s.isEmpty = s.raw === "";
             if (s.isEmpty) {
-                s.parsed = 0;
+                s.parsed = undefined;
                 return;
             }
             if (!/^-?[0-9]*\.?[0-9]*$/.test(s.raw)) {
@@ -138,7 +137,6 @@ class NumberAnkFormat<TRequired extends boolean> extends AnkFormat<number, strin
                 return;
             }
             s.parsed = num;
-            console.log("Parsed num", s.raw, s.parsed);
         });
     }
 
@@ -148,7 +146,7 @@ class NumberAnkFormat<TRequired extends boolean> extends AnkFormat<number, strin
 
     positive(message?: string): this {
         return this.extendWith(s => {
-            if (s.error !== undefined || s.isEmpty)
+            if (s.error !== undefined || s.parsed === undefined || s.isEmpty)
                 return;
             if (s.parsed <= 0)
                 s.error = message ?? "Enter a positive value.";
@@ -157,7 +155,7 @@ class NumberAnkFormat<TRequired extends boolean> extends AnkFormat<number, strin
 
     decimals2(message?: string): this {
         return this.extendWith(s => {
-            if (s.error !== undefined || s.isEmpty)
+            if (s.error !== undefined || s.parsed === undefined || s.isEmpty)
                 return;
             if (Math.abs(s.parsed * 100 - Math.round(s.parsed * 100)) > 0.000001)
                 s.error = message ?? "No more than 2 digits for pence.";
@@ -175,6 +173,7 @@ type _<T> = T extends {} ? { [k in keyof T]: T[k] } : T;
 
 export type AnkValue<TValue, TRaw, TReq extends boolean = boolean> = {
     format: AnkFormat<TValue, TRaw, TReq>;
+    raw: TRaw;
     value: TValue | undefined;
     error: string | undefined;
     required: TReq;
@@ -228,26 +227,31 @@ export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TV
         const ps = format.serialise(val);
         internalSetError(ps.error);
         internalSetValue(ps.parsed);
+        internalSetRaw(ps.raw);
     }
     function commitRaw(raw: TRaw): TRaw | undefined {
         var p = format.parse(raw);
-        if (p.error !== undefined)
+        if (p.error !== undefined) {
             internalSetError(p.error);
-        else if (p.parsed !== undefined) {
+            internalSetRaw(raw);
+        } else if (p.parsed !== undefined) {
             const ps = format.serialise(p.parsed);
             internalSetError(ps.error);
             internalSetValue(ps.parsed);
-            return ps.raw;
+            internalSetRaw(ps.raw);
+            return ps.raw; // TODO <<<<<<<<<<<<<< how is the return value used?
         } else // both undefined, ie {}
             clear();
     }
     function clear() {
+        internalSetRaw(format.empty);
         internalSetValue(format.parse(format.empty).parsed);
         internalSetError(undefined);
     }
     return {
         required: format.isRequired,
         format,
+        raw,
         value,
         error,
         setFormat,
@@ -268,10 +272,9 @@ export function AnkTextField<TValue, TReq extends boolean>({ ank, ...rest }: Ank
     const [suppressError, setSuppressError] = useState(false);
 
     useEffect(() => {
-        if (ank.value === undefined && ank.error !== undefined)
-            return; // this looks like a format parse error, so don't update the value (we could only set it to empty anyhow)
-        setRaw(ank.value === undefined ? "" : ank.format.serialise(ank.value).raw);
-    }, [ank.value, ank.error]);
+        if (ank.raw !== raw)
+            setRaw(ank.raw);
+    }, [ank.raw]);
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
         setRaw(e.target.value);
