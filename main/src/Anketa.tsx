@@ -14,23 +14,26 @@ interface ParseSerialise<TValue, TRaw> {
 type TransformerFunc<TValue, TRaw> = (state: ParseSerialise<TValue, TRaw>) => void;
 
 abstract class AnkFormat<TValue, TRaw, TRequired extends boolean> {
-    private transformer: TransformerFunc<TValue, TRaw>;
-    public readonly isRequired: TRequired;
+    #transformer: TransformerFunc<TValue, TRaw>;
+    #isRequired: TRequired;
     public readonly empty: TRaw;
 
     constructor(isRequired: TRequired, empty: TRaw) {
-        this.transformer = s => { };
-        this.isRequired = isRequired;
+        this.#transformer = s => { };
+        this.#isRequired = isRequired;
         this.empty = empty;
     }
+
+    public get isRequired(): TRequired { return this.#isRequired; }
+    protected set isRequired(value: TRequired) { this.#isRequired = value; }
 
     protected extendWith(transformer: TransformerFunc<TValue, TRaw>): this {
         const extended = new (this.constructor as any)(this.required) as this;
         for (const key in this)
             if (this.hasOwnProperty(key))
                 extended[key] = this[key];
-        const oldTransformers = this.transformer;
-        this.transformer = (s: ParseSerialise<TValue, TRaw>) => {
+        const oldTransformers = this.#transformer;
+        extended.#transformer = (s: ParseSerialise<TValue, TRaw>) => {
             oldTransformers(s);
             transformer(s);
         };
@@ -39,22 +42,24 @@ abstract class AnkFormat<TValue, TRaw, TRequired extends boolean> {
 
     //abstract serialise(val: TValue): TRaw;
 
-    required(message?: string): this & AnkFormat<TValue, TRaw, true> {
-        return this.extendWith(s => {
+    required(message?: string): AnkFormat<TValue, TRaw, true> {
+        var fmt = this.extendWith(s => {
             if (s.error !== undefined)
                 return;
             if (s.isEmpty)
                 s.error = message ?? "Required.";
-        }) as this & AnkFormat<TValue, TRaw, true>;
+        }) as AnkFormat<TValue, TRaw, true>;
+        fmt.isRequired = true;
+        return fmt;
     }
 
     parse(raw: TRaw): ParseSerialise<TValue, TRaw> {
         const state: ParseSerialise<TValue, TRaw> = {
             raw,
-            parsed: raw as any,
+            parsed: raw as any, // TODO <<<<<<<<<<<<<<<<<<<<<<< the fix might be to make the parse stage not be a transformer
             isEmpty: true,
         };
-        this.transformer(state);
+        this.#transformer(state);
         return state;
     }
 
@@ -62,11 +67,11 @@ abstract class AnkFormat<TValue, TRaw, TRequired extends boolean> {
 }
 
 export class ank {
-    static parseString(): StringAnkFormat<boolean> {
+    static parseString(): StringAnkFormat<false> {
         return new StringAnkFormat(false)._parse();
     }
 
-    static parseNumber(message?: string): NumberAnkFormat<boolean> {
+    static parseNumber(message?: string): NumberAnkFormat<false> {
         return new NumberAnkFormat(false)._parse(message);
     }
 }
@@ -118,6 +123,7 @@ class NumberAnkFormat<TRequired extends boolean> extends AnkFormat<number, strin
     _parse(message?: string): this {
         return this.extendWith(s => {
             s.raw = s.raw.trim();
+            s.isEmpty = s.raw === "";
             if (s.isEmpty) {
                 s.parsed = 0;
                 return;
@@ -132,6 +138,7 @@ class NumberAnkFormat<TRequired extends boolean> extends AnkFormat<number, strin
                 return;
             }
             s.parsed = num;
+            console.log("Parsed num", s.raw, s.parsed);
         });
     }
 
