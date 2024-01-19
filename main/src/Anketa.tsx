@@ -223,9 +223,10 @@ export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TV
 
     function setFormat(fmt: AnkFormat<TValue, TRaw, TReq>) {
         internalSetFormat(fmt);
-        const ps = format.parse(raw);
+        const ps = fmt.parse(raw);
         internalSetError(ps.error);
         internalSetValue(ps.parsed);
+        internalSetRaw(ps.raw);
     }
     function setValue(val: TValue) {
         const ps = format.serialise(val);
