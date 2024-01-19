@@ -157,15 +157,17 @@ class NumberAnkFormat<TRequired extends boolean> extends AnkFormat<number, strin
 
     decimals2(message?: string): this {
         return this.extendWith(s => {
+            if (s.parsed !== undefined) {
+                let str = s.parsed.toFixed(2);
+                if (Number(str) == s.parsed)
+                    s.raw = str;
+                else
+                    s.raw = s.parsed.toString();
+            }
             if (s.error !== undefined || s.parsed === undefined || s.isEmpty)
                 return;
             if (Math.abs(s.parsed * 100 - Math.round(s.parsed * 100)) > 0.000001)
                 s.error = message ?? "No more than 2 digits for pence.";
-            let str = s.parsed.toFixed(2);
-            if (Number(str) == s.parsed)
-                s.raw = str;
-            else
-                s.raw = s.parsed.toString();
         });
     }
 }
@@ -236,7 +238,7 @@ export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TV
         if (p.error !== undefined) {
             internalSetError(p.error);
             internalSetValue(p.parsed);
-            internalSetRaw(raw);
+            internalSetRaw(p.raw);
         } else if (p.parsed !== undefined) {
             const ps = format.serialise(p.parsed);
             internalSetError(ps.error);
