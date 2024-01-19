@@ -217,7 +217,7 @@ export function ankFormValues<T extends AnkFormValues>(form: T): AnkFormOf<T> | 
 export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TValue | null, initialFormat: AnkFormat<TValue, TRaw, TReq>): AnkValue<TValue, TRaw, TReq> {
     const initial = useMemo(() => defaultValue === null ? initialFormat.parse(initialFormat.empty) : initialFormat.serialise(defaultValue), []);
     const [format, internalSetFormat] = useState(initialFormat);
-    const [raw, internalSetRaw] = useState<TRaw>(initialFormat.empty);
+    const [raw, internalSetRaw] = useState<TRaw>(initial.raw);
     const [value, internalSetValue] = useState<TValue | undefined>(initial.parsed);
     const [error, internalSetError] = useState<string | undefined>(initial.error);
 
@@ -273,7 +273,7 @@ export interface AnkTextFieldProps<TValue, TReq extends boolean> extends React.C
 }
 
 export function AnkTextField<TValue, TReq extends boolean>({ ank, ...rest }: AnkTextFieldProps<TValue, TReq>): JSX.Element {
-    const [raw, setRaw] = useState(ank.value === undefined ? "" : ank.format.serialise(ank.value).raw);
+    const [raw, setRaw] = useState(ank.raw);
     const [suppressError, setSuppressError] = useState(false);
 
     useEffect(() => {
@@ -308,10 +308,3 @@ export function AnkTextField<TValue, TReq extends boolean>({ ank, ...rest }: Ank
     return <TextField {...rest} value={raw} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur} onKeyDown={handleKeyDown}
         error={!suppressError && !!ank.error} helperText={!suppressError && ank.error} />
 }
-
-// let x: AnkValue<string, string, true> = useAnkValue(null, ank.parseString().required());
-// let y: AnkValue<string, string, infer T> = x;
-// y = x; // should be possible!
-// let xx = x.setFormat;
-// let yy = y.setFormat;
-// yy = xx; // should be possible!
