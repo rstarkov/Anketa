@@ -87,6 +87,7 @@ class StringAnkFormat<TRequired extends boolean> extends AnkFormat<string, strin
     _parse(): this {
         return this.extendWith(s => {
             s.parsed = s.raw;
+            s.isEmpty = s.parsed === "";
         });
     }
 
@@ -99,6 +100,7 @@ class StringAnkFormat<TRequired extends boolean> extends AnkFormat<string, strin
             if (s.error !== undefined || s.parsed === undefined)
                 return;
             s.parsed = s.parsed.trim();
+            s.isEmpty = s.parsed === "";
             s.raw = s.parsed; // no way to disable fixup
         });
     }
@@ -233,6 +235,7 @@ export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TV
         var p = format.parse(raw);
         if (p.error !== undefined) {
             internalSetError(p.error);
+            internalSetValue(p.parsed);
             internalSetRaw(raw);
         } else if (p.parsed !== undefined) {
             const ps = format.serialise(p.parsed);
@@ -296,7 +299,7 @@ export function AnkTextField<TValue, TReq extends boolean>({ ank, ...rest }: Ank
     }
     function commit() {
         const newraw = ank.commitRaw(raw);
-        if (newraw !== undefined)
+        if (newraw !== undefined) // TODO <<<<<<<<<<<<<< no longer necessary now that we respond to raw changes directly
             setRaw(newraw);
     }
 
