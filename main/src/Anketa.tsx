@@ -43,12 +43,13 @@ abstract class AnkFormat<TValue, TRaw, TRequired extends boolean> {
 
     required(message?: string): AnkFormat<TValue, TRaw, true> {
         var fmt = this.extendWith(s => {
-            if (s.error !== undefined)
-                return;
-            if (s.isEmpty)
-                s.error = message ?? "Required.";
+            // if (s.error !== undefined)
+            //     return;
+            // if (s.isEmpty)
+            //     s.error = message ?? "Required.";
         }) as AnkFormat<TValue, TRaw, true>;
         fmt.isRequired = true;
+        // TODO: STORE ERROR MESSAGE IN FMT
         return fmt;
     }
 
@@ -175,11 +176,14 @@ class NumberAnkFormat<TRequired extends boolean> extends AnkFormat<number, strin
 /* from yup - this seems to force TS to show the full type instead of all the wrapped generics. See also https://github.com/microsoft/vscode/issues/94679 and https://stackoverflow.com/a/57683652/2010616 */
 type _<T> = T extends {} ? { [k in keyof T]: T[k] } : T;
 
+export type AnkErrorMode = "initial" | "dirty" | "submit"; // initial: suppress all errors; dirty: show errors except "required"; submit: show all errors
+
 export type AnkValue<TValue, TRaw, TReq extends boolean = boolean> = {
     format: AnkFormat<TValue, TRaw, TReq>;
     raw: TRaw;
     value: TValue | undefined;
     error: string | undefined;
+    errorMode: AnkErrorMode;
     required: TReq;
     setFormat: (fmt: AnkFormat<TValue, TRaw, TReq>) => void;
     setValue: (val: TValue) => void;
@@ -220,6 +224,7 @@ export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TV
     const [raw, internalSetRaw] = useState<TRaw>(initial.raw);
     const [value, internalSetValue] = useState<TValue | undefined>(initial.parsed);
     const [error, internalSetError] = useState<string | undefined>(initial.error);
+    const [errorMode, internalSetErrorMode] = useState<AnkErrorMode>("dirty"); // later: config to use "initial" instead
 
     function setFormat(fmt: AnkFormat<TValue, TRaw, TReq>) {
         internalSetFormat(fmt);
@@ -234,25 +239,30 @@ export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TV
         internalSetValue(ps.parsed);
         internalSetRaw(ps.raw);
     }
-    function commitRaw(raw: TRaw): TRaw | undefined {
-        var p = format.parse(raw);
+    function commitRaw(newraw: TRaw): TRaw | undefined {
+        var p = format.parse(newraw);
         if (p.error !== undefined) {
+            if (p.raw !== raw)
+                internalSetErrorMode("dirty");
             internalSetError(p.error);
             internalSetValue(p.parsed);
             internalSetRaw(p.raw);
         } else if (p.parsed !== undefined) {
             const ps = format.serialise(p.parsed);
+            if (ps.raw !== raw)
+                internalSetErrorMode("dirty");
             internalSetError(ps.error);
             internalSetValue(ps.parsed);
             internalSetRaw(ps.raw);
             return ps.raw; // TODO <<<<<<<<<<<<<< how is the return value used?
         } else // both undefined, ie {}
-            clear();
+            clear(); // TODO <<<<<<<<<<<<<< resets error mode - probably shouldn't?
     }
     function clear() {
         internalSetRaw(format.empty);
         internalSetValue(format.parse(format.empty).parsed);
         internalSetError(undefined);
+        internalSetErrorMode("dirty"); // later: config to use "initial" instead
     }
     return {
         required: format.isRequired,
@@ -260,6 +270,7 @@ export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TV
         raw,
         value,
         error,
+        errorMode,
         setFormat,
         /** Sets the control to a specific parsed value. The error is updated per validation rules. */
         setValue,
@@ -306,6 +317,11 @@ export function AnkTextField<TValue, TReq extends boolean>({ ank, ...rest }: Ank
             setRaw(newraw);
     }
 
+    //const requiredError = ank.format.isRequired && ank.value === undefined;
+    const showError = !suppressError && ank.errorMode !== "initial" && !!ank.error;
+    //const errorText = showError && (ank.error || ());
+    // TODO <<<<<<<<<<<<< display Required error depending on mode
+
     return <TextField {...rest} value={raw} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur} onKeyDown={handleKeyDown}
-        error={!suppressError && !!ank.error} helperText={!suppressError && ank.error} />
+        error={showError} helperText={showError && ank.error} />
 }
