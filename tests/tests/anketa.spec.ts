@@ -17,7 +17,7 @@ async function checkAnkTextbox(page: Page, testid: string, raw: string, trueval:
 }
 
 test("AnkTextField initial values @anketa", async ({ page }) => {
-    await page.goto("/test/anketa");
+    await page.goto("/test/basic");
 
     // Initial values as passed into useAnk
     await checkAnkTextbox(page, "ank-initial-amount-1", "23.70", "number: 23.7", undefined);
@@ -27,7 +27,7 @@ test("AnkTextField initial values @anketa", async ({ page }) => {
 });
 
 test("AnkTextField basic user editing @anketa", async ({ page }) => {
-    await page.goto("/test/anketa");
+    await page.goto("/test/basic");
     const tbAmountReq = page.getByTestId("ank-amount-req-inp").getByRole("textbox");
     const tbTextReq = page.getByTestId("ank-text-req-inp").getByRole("textbox");
 
@@ -69,7 +69,7 @@ test("AnkTextField basic user editing @anketa", async ({ page }) => {
 });
 
 test("AnkTextField programmatic editing @anketa", async ({ page }) => {
-    await page.goto("/test/anketa");
+    await page.goto("/test/basic");
     const tbAmountReq = page.getByTestId("ank-amount-req-inp").getByRole("textbox");
     const tbTextReq = page.getByTestId("ank-text-req-inp").getByRole("textbox");
 
