@@ -1,6 +1,5 @@
 import { TextField } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
-import { isKey } from "~/util/misc";
 
 interface ParseSerialise<TValue, TRaw> {
     raw: TRaw;
@@ -332,4 +331,8 @@ export function AnkTextField<TValue, TReq extends boolean>({ ank, ...rest }: Ank
 
     return <TextField {...rest} value={raw} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur} onKeyDown={handleKeyDown}
         error={showError} helperText={showError && ank.error} />
+}
+
+export function isKey(e: KeyboardEvent | React.KeyboardEvent, key: string, ctrl?: boolean, alt?: boolean, shift?: boolean): boolean {
+    return e.key === key && e.ctrlKey === (ctrl ?? false) && e.altKey === (alt ?? false) && e.shiftKey === (shift ?? false);
 }
