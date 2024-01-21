@@ -26,9 +26,9 @@ abstract class AnkFormat<TValue, TRaw, TRequired extends boolean> {
     protected set isRequired(value: TRequired) { this.#isRequired = value; }
 
     protected extendWith(transformer: TransformerFunc<TValue, TRaw>): this {
-        const extended = new (this.constructor as any)(this.#isRequired) as this;
+        const extended = new (this.constructor as any)(this.#isRequired) as this; // eslint-disable-line @typescript-eslint/no-unsafe-call
         for (const key in this)
-            if (this.hasOwnProperty(key))
+            if (Object.hasOwn(this, key))
                 extended[key] = this[key];
         const oldTransformers = this.#transformer;
         extended.#transformer = (s: ParseSerialise<TValue, TRaw>) => {
@@ -41,7 +41,7 @@ abstract class AnkFormat<TValue, TRaw, TRequired extends boolean> {
     //abstract serialise(val: TValue): TRaw;
 
     required(message?: string): AnkFormat<TValue, TRaw, true> {
-        var fmt = this.extendWith(s => {
+        const fmt = this.extendWith(s => {
             // if (s.error !== undefined)
             //     return;
             // if (s.isEmpty)
@@ -167,7 +167,7 @@ class NumberAnkFormat<TRequired extends boolean> extends AnkFormat<number, strin
     decimals2(message?: string): this {
         return this.extendWith(s => {
             if (s.parsed !== undefined) {
-                let str = s.parsed.toFixed(2);
+                const str = s.parsed.toFixed(2);
                 if (Number(str) == s.parsed)
                     s.raw = str;
                 else
@@ -182,7 +182,7 @@ class NumberAnkFormat<TRequired extends boolean> extends AnkFormat<number, strin
 }
 
 /* from yup - this seems to force TS to show the full type instead of all the wrapped generics. See also https://github.com/microsoft/vscode/issues/94679 and https://stackoverflow.com/a/57683652/2010616 */
-type _<T> = T extends {} ? { [k in keyof T]: T[k] } : T;
+// type _<T> = T extends {} ? { [k in keyof T]: T[k] } : T; // currently unused; lint complains about {}; try Record<string,never> instead?
 
 export type AnkErrorMode = "initial" | "dirty" | "submit"; // initial: suppress all errors; dirty: show errors except "required"; submit: show all errors
 
@@ -220,11 +220,11 @@ export type AnkFormOf<T> = {
 //     }>;
 
 export function ankFormValues<T extends AnkFormValues>(form: T): AnkFormOf<T> | undefined {
-    let result: Partial<AnkFormOf<T>> = {};
-    for (let key in form) {
-        if (form.hasOwnProperty(key)) {
+    const result: Partial<AnkFormOf<T>> = {};
+    for (const key in form) {
+        if (Object.hasOwn(form, key)) {
             const ankValue = form[key];
-            result[key as keyof T] = ankValue.value;
+            result[key] = ankValue.value; // eslint-disable-line @typescript-eslint/no-unsafe-assignment
         }
     }
     return result as AnkFormOf<T>;
@@ -251,7 +251,7 @@ export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TV
         _setState(format.serialise(val), "dirty"); // TODO: accept error mode parameter
     }
     function commitRaw(newraw: TRaw): TRaw | undefined {
-        var p = format.parse(newraw);
+        const p = format.parse(newraw);
         if (p.error !== undefined) {
             // we have some kind of an error - leave raw as the format returned it
             _setState(p, undefined);
