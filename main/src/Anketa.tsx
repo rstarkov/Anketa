@@ -185,9 +185,13 @@ export type AnkValue<TValue, TRaw, TReq extends boolean = boolean> = {
     errorMode: AnkErrorMode;
     required: TReq;
     setFormat: (fmt: AnkFormat<TValue, TRaw, TReq>) => void;
+    /** Sets the control to a specific parsed value. The error is updated per validation rules. */
     setValue: (val: TValue) => void;
+    /** Resets the control to an empty value and clears the error, if any. */
     clear: () => void;
     commitRaw: (raw: TRaw) => TRaw | undefined;
+    /** Sets the error display mode. */
+    setErrorMode: (mode: AnkErrorMode) => void;
 };
 
 type AnkFormValues = {
@@ -218,72 +222,63 @@ export function ankFormValues<T extends AnkFormValues>(form: T): AnkFormOf<T> | 
 }
 
 export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TValue | null, initialFormat: AnkFormat<TValue, TRaw, TReq>): AnkValue<TValue, TRaw, TReq> {
-    const initial = useMemo(() => defaultValue === null ? initialFormat.parse(initialFormat.empty) : initialFormat.serialise(defaultValue), []);
-    const [format, internalSetFormat] = useState(initialFormat);
-    const [raw, internalSetRaw] = useState<TRaw>(initial.raw);
-    const [value, internalSetValue] = useState<TValue | undefined>(initial.parsed);
-    const [error, internalSetError] = useState<string | undefined>(initial.error);
+    const [result, internalSetResult] = useState(() => defaultValue === null ? initialFormat.parse(initialFormat.empty) : initialFormat.serialise(defaultValue));
     const [errorMode, internalSetErrorMode] = useState<AnkErrorMode>("dirty"); // later: config to use "initial" instead
+    const [format, _setFormat] = useState(initialFormat);
 
-    function internalSetRawAndErrorMode(newraw: TRaw) {
-        if (newraw !== raw)
+    function _setState(ps: ParseSerialise<TValue, TRaw>, em: AnkErrorMode | undefined) {
+        if (em !== undefined)
+            internalSetErrorMode(em);
+        else if (ps.raw !== result.raw)
             internalSetErrorMode("dirty");
-        internalSetRaw(newraw);
+        internalSetResult(ps);
     }
 
     function setFormat(fmt: AnkFormat<TValue, TRaw, TReq>) {
-        internalSetFormat(fmt);
-        const ps = fmt.parse(raw);
-        internalSetError(ps.error);
-        internalSetValue(ps.parsed);
-        internalSetRaw(ps.raw);
+        _setFormat(fmt);
+        _setState(fmt.parse(result.raw), errorMode); // preserve current error mode // TODO: accept error mode parameter
     }
     function setValue(val: TValue) {
-        const ps = format.serialise(val);
-        internalSetError(ps.error);
-        internalSetValue(ps.parsed);
-        internalSetRaw(ps.raw);
+        _setState(format.serialise(val), "dirty"); // TODO: accept error mode parameter
     }
     function commitRaw(newraw: TRaw): TRaw | undefined {
         var p = format.parse(newraw);
         if (p.error !== undefined) {
             // we have some kind of an error - leave raw as the format returned it
-            internalSetRawAndErrorMode(p.raw);
-            internalSetValue(p.parsed);
-            internalSetError(p.error);
+            _setState(p, undefined);
         } else if (p.parsed !== undefined) {
             // parsed to a non-empty value - re-serialise to fix up the raw value per the format
             const ps = format.serialise(p.parsed);
-            internalSetRawAndErrorMode(ps.raw);
-            internalSetValue(ps.parsed);
-            internalSetError(ps.error);
+            _setState(ps, undefined);
             return ps.raw;
         } else {
             // error and value are both undefined - this is an empty value but not exactly the same as "clear" due to error mode
-            internalSetRawAndErrorMode(format.empty);
-            internalSetValue(format.parse(format.empty).parsed);
-            internalSetError(undefined);
+            _setState(format.parse(format.empty), undefined);
         }
     }
     function clear() {
-        internalSetRaw(format.empty);
-        internalSetValue(format.parse(format.empty).parsed);
-        internalSetError(undefined);
-        internalSetErrorMode("dirty"); // later: config to use "initial" instead
+        _setState(format.parse(format.empty), "dirty"); // TODO: config prop to use "initial" instead
     }
+    function setErrorMode(mode: AnkErrorMode) {
+        internalSetErrorMode(mode);
+    }
+
+    let error = errorMode === "initial" ? undefined : result.error;
+    if (errorMode === "submit" && error === undefined && format.isRequired && result.isEmpty)
+        error = "Required."; // TODO: customizable message
+
     return {
         required: format.isRequired,
         format,
-        raw,
-        value,
+        raw: result.raw,
+        value: result.parsed,
         error,
         errorMode,
         setFormat,
-        /** Sets the control to a specific parsed value. The error is updated per validation rules. */
         setValue,
         commitRaw,
-        /** Resets the control to an empty value and clears the error, if any. */
         clear,
+        setErrorMode,
     };
 }
 
@@ -294,6 +289,7 @@ export interface AnkTextFieldProps<TValue, TReq extends boolean> extends React.C
 export function AnkTextField<TValue, TReq extends boolean>({ ank, ...rest }: AnkTextFieldProps<TValue, TReq>): JSX.Element {
     const [raw, setRaw] = useState(ank.raw);
     const [suppressError, setSuppressError] = useState(false);
+    // TODO: we suppress error on focus because ank.error doesn't update as we edit - but we can still call ank.format.parse (+"required" logic)
 
     useEffect(() => {
         if (ank.raw !== raw)
@@ -324,13 +320,8 @@ export function AnkTextField<TValue, TReq extends boolean>({ ank, ...rest }: Ank
             setRaw(newraw); // this ensures that the raw value gets re-formatted per the format even if the parsed value didn't change
     }
 
-    //const requiredError = ank.format.isRequired && ank.value === undefined;
-    const showError = !suppressError && ank.errorMode !== "initial" && !!ank.error;
-    //const errorText = showError && (ank.error || ());
-    // TODO <<<<<<<<<<<<< display Required error depending on mode
-
     return <TextField {...rest} value={raw} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur} onKeyDown={handleKeyDown}
-        error={showError} helperText={showError && ank.error} />
+        required={ank.format.isRequired} error={!suppressError && !!ank.error} helperText={!suppressError && ank.error} />
 }
 
 export function isKey(e: KeyboardEvent | React.KeyboardEvent, key: string, ctrl?: boolean, alt?: boolean, shift?: boolean): boolean {
