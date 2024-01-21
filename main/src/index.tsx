@@ -5,7 +5,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { TestAnketaFormPage } from "./TestAnketaFormPage";
-import { TestAnketaPage } from "./TestAnketaPage";
+import { TestAnketaBasicPage } from "./TestAnketaBasicPage";
 
 const theme = createTheme({});
 
@@ -17,7 +17,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                 <BrowserRouter>
                     <Routes>
                         <Route path="/" element={<div><h1>Anketa Dev</h1></div>} />
-                        <Route path="/test/basic" element={<TestAnketaPage />} />
+                        <Route path="/test/basic" element={<TestAnketaBasicPage />} />
                         <Route path="/test/form" element={<TestAnketaFormPage />} />
                     </Routes>
                 </BrowserRouter>

@@ -18,7 +18,7 @@ const fmtTextReq = fmtText.required();
 const fmtAmount = ank.parseNumber("Enter a valid number.").positive("Enter a value greater than 0.").decimals2("No more than 2 digits for pence.");
 const fmtAmountReq = fmtAmount.required();
 
-export function TestAnketaPage(): JSX.Element {
+export function TestAnketaBasicPage(): JSX.Element {
     const textReq = useAnkValue(null, fmtTextReq);
     const amountReq = useAnkValue(null, fmtAmountReq);
 
@@ -39,6 +39,10 @@ export function TestAnketaPage(): JSX.Element {
         textReq.clear();
         amountReq.clear();
     }
+    function clickSubmit() {
+        textReq.setErrorMode("submit");
+        amountReq.setErrorMode("submit");
+    }
 
     return <div>
         <h1>Test Anketa</h1>
@@ -56,6 +60,7 @@ export function TestAnketaPage(): JSX.Element {
             <Grid2 sm={3}><Button onClick={clickSet1} data-testid="set1" variant="contained" fullWidth>Set 1</Button></Grid2>
             <Grid2 sm={3}><Button onClick={clickSet2} data-testid="set2" variant="contained" fullWidth>Set 2</Button></Grid2>
             <Grid2 sm={3}><Button onClick={clickClear} data-testid="clear" variant="contained" fullWidth>Clear</Button></Grid2>
+            <Grid2 sm={3}><Button onClick={clickSubmit} data-testid="submit" variant="contained" fullWidth>Submit</Button></Grid2>
         </Grid2>
 
         <h2>Initial values</h2>
