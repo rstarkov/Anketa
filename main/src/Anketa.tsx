@@ -66,11 +66,11 @@ abstract class AnkFormat<TValue, TRaw, TRequired extends boolean> {
 }
 
 export class ank {
-    static parseString(): StringAnkFormat<false> {
+    static parseString(): StringAnkFormat<boolean> {
         return new StringAnkFormat(false)._parse();
     }
 
-    static parseNumber(message?: string): NumberAnkFormat<false> {
+    static parseNumber(message?: string): NumberAnkFormat<boolean> {
         return new NumberAnkFormat(false)._parse(message);
     }
 }
@@ -152,6 +152,15 @@ class NumberAnkFormat<TRequired extends boolean> extends AnkFormat<number, strin
                 return;
             if (s.parsed <= 0)
                 s.error = message ?? "Enter a positive value.";
+        });
+    }
+
+    max(max: number, message?: string): this {
+        return this.extendWith(s => {
+            if (s.error !== undefined || s.parsed === undefined || s.isEmpty)
+                return;
+            if (s.parsed > max)
+                s.error = message ?? `Enter a value less than or equal to ${this.serialise(max).raw}.`;
         });
     }
 
