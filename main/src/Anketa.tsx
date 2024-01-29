@@ -347,11 +347,11 @@ export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TV
     };
 }
 
-export interface AnkTextFieldProps<TValue, TReq extends boolean> extends React.ComponentProps<typeof TextField> {
-    ank: AnkValue<TValue, string, TReq>;
+export interface AnkTextFieldProps<TValue> extends React.ComponentProps<typeof TextField> {
+    ank: AnkValueBase<TValue, string>;
 }
 
-export function AnkTextField<TValue, TReq extends boolean>({ ank, ...rest }: AnkTextFieldProps<TValue, TReq>): JSX.Element {
+export function AnkTextField<TValue>({ ank, ...rest }: AnkTextFieldProps<TValue>): JSX.Element {
     const [raw, setRaw] = useState(ank.raw);
     const [suppressError, setSuppressError] = useState(false);
     // TODO: we suppress error on focus because ank.error doesn't update as we edit - but we can still call ank.format.parse (+"required" logic)
