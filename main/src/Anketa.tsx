@@ -386,7 +386,7 @@ export function AnkTextField<TValue, TReq extends boolean>({ ank, ...rest }: Ank
     }
 
     return <TextField {...rest} value={raw} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur} onKeyDown={handleKeyDown}
-        required={ank.format.isRequired} error={!suppressError && !!ank.error} helperText={!suppressError && ank.error} />;
+        required={ank.required} error={!suppressError && !!ank.error} helperText={!suppressError && ank.error} />;
 }
 
 export function isKey(e: KeyboardEvent | React.KeyboardEvent, key: string, ctrl?: boolean, alt?: boolean, shift?: boolean): boolean {
