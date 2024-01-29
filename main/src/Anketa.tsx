@@ -1,5 +1,5 @@
 import { TextField } from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface ParseSerialise<TValue, TRaw> {
     raw: TRaw;
@@ -182,18 +182,18 @@ class NumberAnkFormat<TRequired extends boolean> extends AnkFormat<number, strin
 }
 
 /* from yup - this seems to force TS to show the full type instead of all the wrapped generics. See also https://github.com/microsoft/vscode/issues/94679 and https://stackoverflow.com/a/57683652/2010616 */
-// type _<T> = T extends {} ? { [k in keyof T]: T[k] } : T; // currently unused; lint complains about {}; try Record<string,never> instead?
+type _<T> = T extends object ? { [k in keyof T]: T[k] } : T;
 
 export type AnkErrorMode = "initial" | "dirty" | "submit"; // initial: suppress all errors; dirty: show errors except "required"; submit: show all errors
 
-export type AnkValue<TValue, TRaw, TReq extends boolean = boolean> = {
+// split into AnkValueBase+AnkValue because setFormat requires "reverse" assignment of TReq. So AnkValueBase<true> is assignable to AnkValueBase<bool>, but this can't work for AnkValue<>.
+export interface AnkValueBase<TValue, TRaw, TReq extends boolean = boolean> {
     format: AnkFormat<TValue, TRaw, TReq>;
     raw: TRaw;
     value: TValue | undefined;
     error: string | undefined;
     errorMode: AnkErrorMode;
     required: TReq;
-    setFormat: (fmt: AnkFormat<TValue, TRaw, TReq>) => void;
     /** Sets the control to a specific parsed value. The error is updated per validation rules. */
     setValue: (val: TValue) => void;
     /** Resets the control to an empty value and clears the error, if any. */
@@ -201,17 +201,21 @@ export type AnkValue<TValue, TRaw, TReq extends boolean = boolean> = {
     commitRaw: (raw: TRaw) => TRaw | undefined;
     /** Sets the error display mode. */
     setErrorMode: (mode: AnkErrorMode) => void;
-};
-
-type AnkFormValues = {
-    [key: string]: AnkValue<any, any, boolean>;
 }
 
-export type AnkFormOf<T> = {
+export interface AnkValue<TValue, TRaw, TReq extends boolean = boolean> extends AnkValueBase<TValue, TRaw, TReq> {
+    setFormat: (fmt: AnkFormat<TValue, TRaw, TReq>) => void;
+}
+
+type AnkFormValues = {
+    [key: string]: AnkValueBase<any, any, boolean>;
+}
+
+export type AnkFormOf<T> = _<{
     [K in keyof T]:
-    T[K] extends AnkValue<infer TValue, any, true> ? TValue :
-    T[K] extends AnkValue<infer TValue, any, boolean> ? TValue | undefined : never;
-};
+    T[K] extends AnkValueBase<infer TValue, any, true> ? TValue :
+    T[K] extends AnkValueBase<infer TValue, any, boolean> ? TValue | undefined : never;
+}>;
 // Same but with optional properties - causes trouble for keyof
 // export type AnkFormOf<T> = _<{
 //     [K in keyof T as T[K] extends AnkValue<any, any, true> ? K : never]: T[K] extends AnkValue<infer TValue, any, any> ? TValue : never;
@@ -228,6 +232,58 @@ export function ankFormValues<T extends AnkFormValues>(form: T): AnkFormOf<T> | 
         }
     }
     return result as AnkFormOf<T>;
+}
+
+export function useAnkForm<T extends AnkFormValues>(values: T, onSubmit: (values: AnkFormOf<T>) => void, onError?: () => void) {
+    const [dummy, setDummy] = useState(0);
+    const submitting = useRef(false);
+
+    function submit() {
+        // The worst corner case for this is if the user clicks "submit" with the last edited control still focused. The blur
+        // event will call commitRaw, which will call some setStates. Then the click event will execute, and the submit
+        // function must be able to see the state as updated by commitRaw. In theory not even the ordering of
+        // blur/click events is guaranteed, let alone that there will be a react render in between. We're unable to
+        // synchronously ask AnkValue to parse/validate because, by design, AnkValue doesn't know the raw value
+        // until the control commits it (which is critical for performance, keeping re-renders contained to the control until commit).
+        //
+        // In practice, even a fully synchronous submit handler actually sees the parsed value following a blur, meaning
+        // that in practice the order is: blur -> commitRaw -> setStates -> render -> click -> submit. But relying on this
+        // seems fragile. Since a setTimeout doesn't provide full guarantees on blur/click ordering anyway, the middle
+        // ground chosen here is to set a dummy state + effect. So long as blur/click get ordered correctly this
+        // guarantees the rest: commitRaw setStates will have rendered, and as a bonus so does our setErrorMode,
+        // allowing us to use the error value directly (as opposed to some helper "validate()" method on AnkValue).
+
+        for (const key in values)
+            if (Object.hasOwn(values, key))
+                values[key].setErrorMode("submit");
+        submitting.current = true;
+        setDummy(d => d + 1);
+    }
+
+    useEffect(() => {
+        if (!submitting.current) // dummy == 0 isn't good enough due to HMR during dev
+            return;
+        submitting.current = false;
+        const result: Partial<AnkFormOf<T>> = {};
+        for (const key in values) {
+            if (Object.hasOwn(values, key)) {
+                const ankValue = values[key];
+                if (ankValue.error !== undefined) {
+                    if (onError !== undefined)
+                        onError();
+                    return;
+                }
+                result[key] = ankValue.value; // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+            }
+        }
+        // looks good, invoke callback
+        onSubmit(result as AnkFormOf<T>);
+    }, [dummy]);
+
+    return {
+        values,
+        submit,
+    };
 }
 
 export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TValue | null, initialFormat: AnkFormat<TValue, TRaw, TReq>): AnkValue<TValue, TRaw, TReq> {
@@ -330,7 +386,7 @@ export function AnkTextField<TValue, TReq extends boolean>({ ank, ...rest }: Ank
     }
 
     return <TextField {...rest} value={raw} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur} onKeyDown={handleKeyDown}
-        required={ank.format.isRequired} error={!suppressError && !!ank.error} helperText={!suppressError && ank.error} />
+        required={ank.format.isRequired} error={!suppressError && !!ank.error} helperText={!suppressError && ank.error} />;
 }
 
 export function isKey(e: KeyboardEvent | React.KeyboardEvent, key: string, ctrl?: boolean, alt?: boolean, shift?: boolean): boolean {
