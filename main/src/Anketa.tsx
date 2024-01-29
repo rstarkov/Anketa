@@ -238,7 +238,7 @@ export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TV
     function _setState(ps: ParseSerialise<TValue, TRaw>, em: AnkErrorMode | undefined) {
         if (em !== undefined)
             internalSetErrorMode(em);
-        else if (ps.raw !== result.raw)
+        else if (ps.raw !== result.raw && errorMode !== "submit")
             internalSetErrorMode("dirty");
         internalSetResult(ps);
     }
