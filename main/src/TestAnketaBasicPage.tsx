@@ -1,6 +1,6 @@
 import { Button, Unstable_Grid2 as Grid2 } from "@mui/material";
 import { DateTime } from "luxon";
-import { AnkTextField, ank, useAnkValue } from "./Anketa";
+import { AnkTextField, ank, useAnkValue } from "./anketa/Anketa";
 import { unreachable } from "./util";
 
 function strTestVal(v: undefined | null | number | string | boolean | DateTime): string {
