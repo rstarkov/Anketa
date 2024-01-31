@@ -1,7 +1,7 @@
 import { Button, Unstable_Grid2 as Grid2 } from "@mui/material";
 import { DateTime } from "luxon";
-import { AnkTextField, ank, useAnkValue } from "./anketa/Anketa";
 import { unreachable } from "./util";
+import { AnkTextField, ank, useAnkValue } from "./anketa";
 
 function strTestVal(v: undefined | null | number | string | boolean | DateTime): string {
     if (v === undefined) return "<undefined>";
