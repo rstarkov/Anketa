@@ -75,8 +75,15 @@ export function useAnkForm<T extends AnkFormValues>(values: T, onSubmit: (values
         onSubmit(result as AnkFormOf<T>);
     }, [dummy]);
 
+    function clear() {
+        for (const key in values)
+            if (Object.hasOwn(values, key))
+                values[key].clear();
+    }
+
     return {
         values,
         submit,
+        clear,
     };
 }
