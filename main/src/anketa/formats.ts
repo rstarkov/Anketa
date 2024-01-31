@@ -1,3 +1,5 @@
+import { DateTime } from "luxon";
+
 export class ank {
     static parseString(): StringAnkFormat<boolean> {
         return new StringAnkFormat(false)._parse();
@@ -5,6 +7,10 @@ export class ank {
 
     static parseNumber(message?: string): NumberAnkFormat<boolean> {
         return new NumberAnkFormat(false)._parse(message);
+    }
+
+    static parseDate(locale?: string, message?: string): DateAnkFormat<boolean> {
+        return new DateAnkFormat(false)._parse(locale, message);
     }
 }
 
@@ -166,6 +172,44 @@ class NumberAnkFormat<TRequired extends boolean> extends AnkFormat<number, strin
                 s.error = message ?? "No more than 2 digits for pence.";
         });
     }
+}
+
+class DateAnkFormat<TRequired extends boolean> extends AnkFormat<DateTime, string, TRequired> {
+    constructor(isRequired: TRequired) {
+        super(isRequired, "");
+    }
+
+    _parse(locale?: string, message?: string): this {
+        return this.extendWith(s => {
+            s.parsed = undefined;
+            s.raw = s.raw.trim();
+            s.isEmpty = s.raw === "";
+            if (s.isEmpty)
+                return;
+            const opts = { locale: locale ?? "en-GB" };
+            let parsed = DateTime.fromFormat(s.raw, "d/M/yyyy", opts);
+            if (!parsed.isValid)
+                parsed = DateTime.fromFormat(s.raw, "d/M/yy", opts);
+            if (!parsed.isValid) {
+                s.error = message ?? "Enter a valid date.";
+                return;
+            }
+            s.parsed = parsed;
+        });
+    }
+
+    serialise(val: DateTime): ParseSerialise<DateTime, string> {
+        return this.parse(val.toFormat("dd/MM/yyyy"));
+    }
+
+    // max(max: number, message?: string): this {
+    //     return this.extendWith(s => {
+    //         if (s.error !== undefined || s.parsed === undefined || s.isEmpty)
+    //             return;
+    //         if (s.parsed > max)
+    //             s.error = message ?? `Enter a value less than or equal to ${this.serialise(max).raw}.`;
+    //     });
+    // }
 }
 
 type TransformerFunc<TValue, TRaw> = (state: ParseSerialise<TValue, TRaw>) => void;
