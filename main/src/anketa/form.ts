@@ -29,11 +29,19 @@ export function ankFormValues<T extends AnkFormValues>(form: T): AnkFormOf<T> | 
     return result as AnkFormOf<T>;
 }
 
-export function useAnkForm<T extends AnkFormValues>(values: T, onSubmit: (values: AnkFormOf<T>) => void, onError?: () => void) {
+export interface AnkForm<TValues> {
+    values: TValues;
+    submit: (e: React.FormEvent<HTMLElement>) => void;
+    clear: () => void;
+    reset: (values: Partial<AnkFormOf<TValues>>) => void;
+}
+
+export function useAnkForm<T extends AnkFormValues>(values: T, onSubmit: (values: AnkFormOf<T>, form: AnkForm<T>) => void, onError?: () => void): AnkForm<T> {
     const [dummy, setDummy] = useState(0);
     const submitting = useRef(false);
 
-    function submit() {
+    function submit(e: React.FormEvent<HTMLElement>) {
+        e.preventDefault();
         // The worst corner case for this is if the user clicks "submit" with the last edited control still focused. The blur
         // event will call commitRaw, which will call some setStates. Then the click event will execute, and the submit
         // function must be able to see the state as updated by commitRaw. In theory not even the ordering of
@@ -55,6 +63,13 @@ export function useAnkForm<T extends AnkFormValues>(values: T, onSubmit: (values
         setDummy(d => d + 1);
     }
 
+    const form = {
+        values,
+        submit,
+        clear,
+        reset,
+    };
+
     useEffect(() => {
         if (!submitting.current) // dummy == 0 isn't good enough due to HMR during dev
             return;
@@ -72,7 +87,7 @@ export function useAnkForm<T extends AnkFormValues>(values: T, onSubmit: (values
             }
         }
         // looks good, invoke callback
-        onSubmit(result as AnkFormOf<T>);
+        onSubmit(result as AnkFormOf<T>, form);
     }, [dummy]);
 
     function clear() {
@@ -81,9 +96,17 @@ export function useAnkForm<T extends AnkFormValues>(values: T, onSubmit: (values
                 values[key].clear();
     }
 
-    return {
-        values,
-        submit,
-        clear,
-    };
+    function reset(newValues: Partial<AnkFormOf<T>>) {
+        for (const key in values)
+            if (Object.hasOwn(values, key)) {
+                const val = newValues[key];
+                if (val === undefined || val === null)
+                    values[key].clear();
+                else
+                    values[key].setValue(val);
+                values[key].setErrorMode("initial");
+            }
+    }
+
+    return form;
 }
