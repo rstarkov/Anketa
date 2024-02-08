@@ -68,7 +68,7 @@ export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TV
 
     let error = errorMode === "initial" ? undefined : result.error;
     if (errorMode === "submit" && error === undefined && format.isRequired && result.isEmpty)
-        error = "Required."; // TODO: customizable message
+        error = format._requiredError ?? "Required.";
 
     return {
         required: format.isRequired,

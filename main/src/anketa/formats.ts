@@ -19,6 +19,7 @@ export abstract class AnkFormat<TValue, TRaw, TRequired extends boolean> {
     #isRequired: TRequired;
     public readonly empty: TRaw;
 
+    _requiredError: string | undefined;
     constructor(isRequired: TRequired, empty: TRaw) {
         this.#transformer = s => { };
         this.#isRequired = isRequired;
@@ -51,7 +52,7 @@ export abstract class AnkFormat<TValue, TRaw, TRequired extends boolean> {
             //     s.error = message ?? "Required.";
         }) as AnkFormat<TValue, TRaw, true>;
         fmt.isRequired = true;
-        // TODO: STORE ERROR MESSAGE IN FMT
+        fmt._requiredError = message;
         return fmt;
     }
 
