@@ -212,6 +212,23 @@ class DateAnkFormat<TRequired extends boolean> extends AnkFormat<DateTime, strin
     // }
 }
 
+export class NativeAnkFormat<TValue, TRequired extends boolean> extends AnkFormat<TValue, TValue | undefined, TRequired> {
+    constructor(isRequired: TRequired) {
+        super(isRequired, undefined);
+    }
+
+    _parse(): this {
+        return this.extendWith(s => {
+            s.parsed = s.raw;
+            s.isEmpty = s.raw === undefined;
+        });
+    }
+
+    serialise(val: TValue): ParseSerialise<TValue, TValue | undefined> {
+        return this.parse(val);
+    }
+}
+
 type TransformerFunc<TValue, TRaw> = (state: ParseSerialise<TValue, TRaw>) => void;
 
 export interface ParseSerialise<TValue, TRaw> {
