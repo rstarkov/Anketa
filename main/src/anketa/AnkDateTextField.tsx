@@ -21,12 +21,9 @@ import type { AnkValueBase } from "./value";
 interface AnkDateTextFieldProps extends React.ComponentProps<typeof TextField> {
     ank: AnkValueBase<DateTime, string>;
     buttonMonth?: "start" | "end";
-    // TODO: move these into ank.format.min/max
-    minDate?: DateTime,
-    maxDate?: DateTime,
 }
 
-export function AnkDateTextField({ ank, buttonMonth, minDate, maxDate, ...rest }: AnkDateTextFieldProps): JSX.Element {
+export function AnkDateTextField({ ank, buttonMonth, ...rest }: AnkDateTextFieldProps): JSX.Element {
     const [raw, setRaw] = useState(ank.raw);
     const [suppressError, setSuppressError] = useState(false); // TODO: we suppress error on focus because ank.error doesn't update as we edit - but we can still call ank.format.parse (+"required" logic)
     const [open, setOpen] = useState(false);
@@ -84,7 +81,7 @@ export function AnkDateTextField({ ank, buttonMonth, minDate, maxDate, ...rest }
                         <GlobalEscHandler onEsc={() => setOpen(false)} />
                         <ClickAwayListener onClickAway={() => setOpen(false)}>
                             <CalendarContainerDiv>
-                                <CustomDateCalendar value={ank.value} onChange={d => datePicked(d ?? undefined)} buttonMonth={buttonMonth} minDate={minDate} maxDate={maxDate} />
+                                <CustomDateCalendar value={ank.value} onChange={d => datePicked(d ?? undefined)} buttonMonth={buttonMonth} minDate={ank.format._min} maxDate={ank.format._max} />
                             </CalendarContainerDiv>
                         </ClickAwayListener>
                     </div>

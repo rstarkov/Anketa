@@ -20,6 +20,9 @@ export abstract class AnkFormat<TValue, TRaw, TRequired extends boolean> {
     public readonly empty: TRaw;
 
     _requiredError: string | undefined;
+    _min: TValue | undefined;
+    _max: TValue | undefined;
+
     constructor(isRequired: TRequired, empty: TRaw) {
         this.#transformer = s => { };
         this.#isRequired = isRequired;
@@ -42,14 +45,8 @@ export abstract class AnkFormat<TValue, TRaw, TRequired extends boolean> {
         return extended;
     }
 
-    //abstract serialise(val: TValue): TRaw;
-
     required(message?: string): AnkFormat<TValue, TRaw, true> {
         const fmt = this.extendWith(s => {
-            // if (s.error !== undefined)
-            //     return;
-            // if (s.isEmpty)
-            //     s.error = message ?? "Required.";
         }) as AnkFormat<TValue, TRaw, true>;
         fmt.isRequired = true;
         fmt._requiredError = message;
@@ -69,14 +66,22 @@ export abstract class AnkFormat<TValue, TRaw, TRequired extends boolean> {
     abstract serialise(val: TValue): ParseSerialise<TValue, TRaw>;
 }
 
-class StringAnkFormat<TRequired extends boolean> extends AnkFormat<string, string, TRequired> {
+interface StringLikeFormat {
+    _minLen: number | undefined;
+    _maxLen: number | undefined;
+}
+
+export function isStringLikeFormat<T, U, V extends boolean>(format: AnkFormat<T, U, V>): format is AnkFormat<T, U, V> & StringLikeFormat {
+    return "_minLen" in format && "_maxLen" in format;
+}
+
+class StringAnkFormat<TRequired extends boolean> extends AnkFormat<string, string, TRequired> implements StringLikeFormat {
     constructor(isRequired: TRequired) {
         super(isRequired, "");
     }
 
-    // serialise(val: string): string {
-    //     return val;
-    // }
+    _minLen: number | undefined;
+    _maxLen: number | undefined;
 
     _parse(): this {
         return this.extendWith(s => {
@@ -98,22 +103,32 @@ class StringAnkFormat<TRequired extends boolean> extends AnkFormat<string, strin
             s.raw = s.parsed; // no way to disable fixup
         });
     }
+
+    minLen(min: number, message?: string): this {
+        this._minLen = min;
+        return this.extendWith(s => {
+            if (s.error !== undefined || s.parsed === undefined || s.isEmpty)
+                return;
+            if (s.parsed.length > min)
+                s.error = message ?? `Minimum ${min} characters.`;
+        });
+    }
+
+    maxLen(max: number, message?: string): this {
+        this._maxLen = max;
+        return this.extendWith(s => {
+            if (s.error !== undefined || s.parsed === undefined || s.isEmpty)
+                return;
+            if (s.parsed.length > max)
+                s.error = message ?? `Maximum ${max} characters.`;
+        });
+    }
 }
 
 class NumberAnkFormat<TRequired extends boolean> extends AnkFormat<number, string, TRequired> {
     constructor(isRequired: TRequired) {
         super(isRequired, "");
     }
-
-    // serialise(val: number): string {
-    //     if (this.decimals === undefined)
-    //         return val.toString();
-    //     let str = val.toFixed(this.decimals);
-    //     if (Number(str) == val)
-    //         return str;
-    //     else
-    //         return val.toString();
-    // }
 
     _parse(message?: string): this {
         return this.extendWith(s => {
@@ -149,7 +164,18 @@ class NumberAnkFormat<TRequired extends boolean> extends AnkFormat<number, strin
         });
     }
 
+    min(min: number, message?: string): this {
+        this._min = min;
+        return this.extendWith(s => {
+            if (s.error !== undefined || s.parsed === undefined || s.isEmpty)
+                return;
+            if (s.parsed < min)
+                s.error = message ?? `Enter a value greater than or equal to ${this.serialise(min).raw}.`;
+        });
+    }
+
     max(max: number, message?: string): this {
+        this._max = max;
         return this.extendWith(s => {
             if (s.error !== undefined || s.parsed === undefined || s.isEmpty)
                 return;
@@ -203,14 +229,33 @@ class DateAnkFormat<TRequired extends boolean> extends AnkFormat<DateTime, strin
         return this.parse(val.toFormat("dd/MM/yyyy"));
     }
 
-    // max(max: number, message?: string): this {
-    //     return this.extendWith(s => {
-    //         if (s.error !== undefined || s.parsed === undefined || s.isEmpty)
-    //             return;
-    //         if (s.parsed > max)
-    //             s.error = message ?? `Enter a value less than or equal to ${this.serialise(max).raw}.`;
-    //     });
-    // }
+    min(min: DateTime, message?: string): this {
+        this._min = min;
+        return this.extendWith(s => {
+            if (s.error !== undefined || s.parsed === undefined || s.isEmpty)
+                return;
+            if (s.parsed.startOf("day") < min.startOf("day"))
+                s.error = message ?? `Must be no earlier than ${this.serialise(min).raw}.`;
+        });
+    }
+
+    max(max: DateTime, message?: string): this {
+        this._max = max;
+        return this.extendWith(s => {
+            if (s.error !== undefined || s.parsed === undefined || s.isEmpty)
+                return;
+            if (s.parsed.startOf("day") > max.startOf("day"))
+                s.error = message ?? `Must be no later than ${this.serialise(max).raw}.`;
+        });
+    }
+
+    minToday(message?: string): this {
+        return this.max(DateTime.now().startOf("day"), message ?? "Must be no earlier than today.");
+    }
+
+    maxToday(message?: string): this {
+        return this.max(DateTime.now().startOf("day"), message ?? "Must be no later than today.");
+    }
 }
 
 export class NativeAnkFormat<TValue, TRequired extends boolean> extends AnkFormat<TValue, TValue | undefined, TRequired> {

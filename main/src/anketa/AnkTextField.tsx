@@ -2,12 +2,16 @@ import { TextField } from "@mui/material";
 import { useEffect, useState } from "react";
 import type { AnkValueBase } from "./value";
 import { isKey } from "./shared";
+import { isStringLikeFormat } from ".";
 
 export interface AnkTextFieldProps<TValue> extends React.ComponentProps<typeof TextField> {
     ank: AnkValueBase<TValue, string>;
 }
 
-export function AnkTextField<TValue>({ ank, ...rest }: AnkTextFieldProps<TValue>): JSX.Element {
+/**
+ * @param inputProps.maxLength may be set to "null" to disable the automatically applied limit that's based on the current format rules.
+ */
+export function AnkTextField<TValue>({ ank, inputProps, ...rest }: AnkTextFieldProps<TValue>): JSX.Element {
     const [raw, setRaw] = useState(ank.raw);
     const [suppressError, setSuppressError] = useState(false);
     // TODO: we suppress error on focus because ank.error doesn't update as we edit - but we can still call ank.format.parse (+"required" logic)
@@ -41,6 +45,12 @@ export function AnkTextField<TValue>({ ank, ...rest }: AnkTextFieldProps<TValue>
             setRaw(newraw); // this ensures that the raw value gets re-formatted per the format even if the parsed value didn't change
     }
 
-    return <TextField {...rest} value={raw} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur} onKeyDown={handleKeyDown}
+    inputProps = inputProps ?? {};
+    if (inputProps.maxLength === null)
+        inputProps.maxLength = undefined;
+    else if (isStringLikeFormat(ank.format))
+        inputProps.maxLength = ank.format._maxLen;
+
+    return <TextField {...rest} inputProps={inputProps} value={raw} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur} onKeyDown={handleKeyDown}
         required={ank.required} error={!suppressError && !!ank.error} helperText={(!suppressError && ank.error) ?? rest.helperText} />;
 }
