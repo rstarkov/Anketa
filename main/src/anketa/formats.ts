@@ -12,6 +12,10 @@ export class ank {
     static parseDate(locale?: string, message?: string): DateAnkFormat<boolean> {
         return new DateAnkFormat(false)._parse(locale, message);
     }
+
+    static native<TValue>(): NativeAnkFormat<TValue, boolean> {
+        return new NativeAnkFormat<TValue, boolean>(false)._parse();
+    }
 }
 
 export abstract class AnkFormat<TValue, TRaw, TRequired extends boolean> {
