@@ -24,6 +24,10 @@ export interface AnkValue<TValue, TRaw, TReq extends boolean = boolean> extends 
     setFormat: (fmt: AnkFormat<TValue, TRaw, TReq>) => void;
 }
 
+/**
+ * @param defaultValue Initial value for the control. "null" is handled specially to specify that the control should start empty.
+ * @param initialFormat Initial format for the control. Can be changed later via setFormat. DO NOT construct the format inline on every render! Store it in a const or memo.
+ */
 export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TValue | null, initialFormat: AnkFormat<TValue, TRaw, TReq>): AnkValue<TValue, TRaw, TReq> {
     const [result, internalSetResult] = useState(() => defaultValue === null ? initialFormat.parse(initialFormat.empty) : initialFormat.serialise(defaultValue));
     const [errorMode, internalSetErrorMode] = useState<AnkErrorMode>("dirty"); // later: config to use "initial" instead

@@ -20,10 +20,13 @@ import type { AnkValueBase } from "./value";
 
 interface AnkDateTextFieldProps extends React.ComponentProps<typeof TextField> {
     ank: AnkValueBase<DateTime, string>;
+    /** If set, a button is added in the calendar picker footer for the start or end of the current month. */
     buttonMonth?: "start" | "end";
+    /** The z-index for the calendar picker. Defaults to 1300 (the default MUI dialog zIndex). */
+    zIndex?: number;
 }
 
-export function AnkDateTextField({ ank, buttonMonth, ...rest }: AnkDateTextFieldProps): JSX.Element {
+export function AnkDateTextField({ ank, buttonMonth, zIndex, ...rest }: AnkDateTextFieldProps): JSX.Element {
     const [raw, setRaw] = useState(ank.raw);
     const [suppressError, setSuppressError] = useState(false); // TODO: we suppress error on focus because ank.error doesn't update as we edit - but we can still call ank.format.parse (+"required" logic)
     const [open, setOpen] = useState(false);
@@ -74,15 +77,15 @@ export function AnkDateTextField({ ank, buttonMonth, ...rest }: AnkDateTextField
                     </InputAdornment >
                 ),
             }} />
-        <Popper open={open} anchorEl={anchorRef.current} placement="bottom-start" transition style={{ zIndex: 1 }}>
+        <Popper open={open} anchorEl={anchorRef.current} placement="bottom-start" transition style={{ zIndex: zIndex ?? 1300 }}>
             {({ TransitionProps }) => (
                 <Fade {...TransitionProps}>
                     <div>
                         <GlobalEscHandler onEsc={() => setOpen(false)} />
                         <ClickAwayListener onClickAway={() => setOpen(false)}>
-                            <CalendarContainerDiv>
+                            <div>{/* div is required for clickaway listener to work correctly */}
                                 <CustomDateCalendar value={ank.value} onChange={d => datePicked(d ?? undefined)} buttonMonth={buttonMonth} minDate={ank.format._min} maxDate={ank.format._max} />
-                            </CalendarContainerDiv>
+                            </div>
                         </ClickAwayListener>
                     </div>
                 </Fade>

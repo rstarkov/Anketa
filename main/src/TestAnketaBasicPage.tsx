@@ -1,7 +1,7 @@
 import { Button, Unstable_Grid2 as Grid2 } from "@mui/material";
 import { DateTime } from "luxon";
+import { AnkDateTextField, AnkTextField, ank, useAnkValue } from "./anketa";
 import { unreachable } from "./util";
-import { AnkTextField, ank, useAnkValue } from "./anketa";
 
 function strTestVal(v: undefined | null | number | string | boolean | DateTime): string {
     if (v === undefined) return "<undefined>";
@@ -17,10 +17,12 @@ const fmtText = ank.parseString().trim();
 const fmtTextReq = fmtText.required();
 const fmtAmount = ank.parseNumber("Enter a valid number.").positive("Enter a value greater than 0.").decimals2("No more than 2 digits for pence.");
 const fmtAmountReq = fmtAmount.required();
+const fmtDateReq = ank.parseDate().required();
 
 export function TestAnketaBasicPage(): JSX.Element {
     const textReq = useAnkValue(null, fmtTextReq);
     const amountReq = useAnkValue(null, fmtAmountReq);
+    const dateReq = useAnkValue(null, fmtDateReq);
 
     const initialAmount1 = useAnkValue(23.7, fmtAmountReq);
     const initialAmount2 = useAnkValue(23.701, fmtAmountReq);
@@ -56,6 +58,10 @@ export function TestAnketaBasicPage(): JSX.Element {
             <Grid2 sm={3} data-testid="ank-text-req-inp"><AnkTextField ank={textReq} label="Ank Text Req" size="small" fullWidth /></Grid2>
             <Grid2 sm={3} data-testid="ank-text-req-trueval">{strTestVal(textReq.value)}</Grid2>
             <Grid2 sm={6} data-testid="ank-text-req-trueerr">{strTestVal(textReq.error)}</Grid2>
+
+            <Grid2 sm={3} data-testid="ank-date-req-inp"><AnkDateTextField ank={dateReq} label="Ank Date Req" size="small" fullWidth /></Grid2>
+            <Grid2 sm={3} data-testid="ank-date-req-trueval">{strTestVal(dateReq.value)}</Grid2>
+            <Grid2 sm={6} data-testid="ank-date-req-trueerr">{strTestVal(dateReq.error)}</Grid2>
 
             <Grid2 sm={3}><Button onClick={clickSet1} data-testid="set1" variant="contained" fullWidth>Set 1</Button></Grid2>
             <Grid2 sm={3}><Button onClick={clickSet2} data-testid="set2" variant="contained" fullWidth>Set 2</Button></Grid2>
