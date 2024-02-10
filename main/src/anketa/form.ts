@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { AnkValueBase } from "./value";
 import type { _ } from "./shared";
 
-type AnkFormValues = {
+export type AnkFormValues = {
     [key: string]: AnkValueBase<any, any, boolean>;
 }
 
