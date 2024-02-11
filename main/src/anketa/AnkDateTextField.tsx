@@ -84,7 +84,7 @@ export function AnkDateTextField({ ank, buttonMonth, zIndex, ...rest }: AnkDateT
                         <GlobalEscHandler onEsc={() => setOpen(false)} />
                         <ClickAwayListener onClickAway={() => setOpen(false)}>
                             <div>{/* div is required for clickaway listener to work correctly */}
-                                <CustomDateCalendar value={ank.value} onChange={d => datePicked(d ?? undefined)} buttonMonth={buttonMonth} minDate={ank.format._min} maxDate={ank.format._max} />
+                                <CustomDateCalendar value={ank.value ?? null} onChange={d => datePicked(d ?? undefined)} buttonMonth={buttonMonth} minDate={ank.format._min} maxDate={ank.format._max} />
                             </div>
                         </ClickAwayListener>
                     </div>
