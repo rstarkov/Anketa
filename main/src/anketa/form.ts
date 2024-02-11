@@ -2,9 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { AnkValueBase } from "./value";
 import type { _ } from "./shared";
 
-export type AnkFormValues = {
-    [key: string]: AnkValueBase<any, any, boolean>;
-}
+export type AnkFormValues = Record<string, AnkValueBase<any, any, boolean>>;
 
 export type AnkFormOf<T> = _<{
     [K in keyof T]:
