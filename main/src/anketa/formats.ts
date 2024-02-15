@@ -36,7 +36,7 @@ export abstract class AnkFormat<TValue, TRaw, TRequired extends boolean> {
     public get isRequired(): TRequired { return this.#isRequired; }
     protected set isRequired(value: TRequired) { this.#isRequired = value; }
 
-    protected extendWith(transformer: TransformerFunc<TValue, TRaw>): this {
+    extendWith(transformer: TransformerFunc<TValue, TRaw>): this {
         const extended = new (this.constructor as any)(this.#isRequired) as this; // eslint-disable-line @typescript-eslint/no-unsafe-call
         for (const key in this)
             if (Object.hasOwn(this, key))
@@ -79,7 +79,7 @@ export function isStringLikeFormat<T, U, V extends boolean>(format: AnkFormat<T,
     return "_minLen" in format && "_maxLen" in format;
 }
 
-class StringAnkFormat<TRequired extends boolean> extends AnkFormat<string, string, TRequired> implements StringLikeFormat {
+export class StringAnkFormat<TRequired extends boolean> extends AnkFormat<string, string, TRequired> implements StringLikeFormat {
     constructor(isRequired: TRequired) {
         super(isRequired, "");
     }
@@ -129,7 +129,7 @@ class StringAnkFormat<TRequired extends boolean> extends AnkFormat<string, strin
     }
 }
 
-class NumberAnkFormat<TRequired extends boolean> extends AnkFormat<number, string, TRequired> {
+export class NumberAnkFormat<TRequired extends boolean> extends AnkFormat<number, string, TRequired> {
     constructor(isRequired: TRequired) {
         super(isRequired, "");
     }
@@ -205,7 +205,7 @@ class NumberAnkFormat<TRequired extends boolean> extends AnkFormat<number, strin
     }
 }
 
-class DateAnkFormat<TRequired extends boolean> extends AnkFormat<DateTime, string, TRequired> {
+export class DateAnkFormat<TRequired extends boolean> extends AnkFormat<DateTime, string, TRequired> {
     constructor(isRequired: TRequired) {
         super(isRequired, "");
     }
