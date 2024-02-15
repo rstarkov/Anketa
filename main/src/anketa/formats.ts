@@ -127,6 +127,15 @@ export class StringAnkFormat<TRequired extends boolean> extends AnkFormat<string
                 s.error = message ?? `Maximum ${max} characters.`;
         });
     }
+
+    email(message?: string): this {
+        return this.extendWith(s => {
+            if (s.error !== undefined || s.parsed === undefined || s.isEmpty)
+                return;
+            if (!/^[^@]+@[^@]+\.[^@]+$/.test(s.parsed))
+                s.error = message ?? "Valid email address required.";
+        });
+    }
 }
 
 export class NumberAnkFormat<TRequired extends boolean> extends AnkFormat<number, string, TRequired> {
