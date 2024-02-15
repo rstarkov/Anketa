@@ -70,6 +70,7 @@ export function AnkDateTextField({ ank, buttonMonth, zIndex, ...rest }: AnkDateT
             error={!suppressError && !!ank.error} helperText={(!suppressError && ank.error) ?? rest.helperText}
             ref={anchorRef}
             focused={open ? true : undefined}
+            required={ank.required}
             InputProps={{
                 endAdornment: (
                     <InputAdornment position="end" >
