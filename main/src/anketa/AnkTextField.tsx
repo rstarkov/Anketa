@@ -8,12 +8,14 @@ export interface AnkTextFieldProps<TValue> extends React.ComponentProps<typeof T
     ank: AnkValueBase<TValue, string>;
     /** Set to true to automatically show an empty value when the control is disabled, without clearing the actual underlying value. */
     blankDisabled?: boolean;
+    /** Invoked on every raw value change. */
+    onRawChange?: (raw: string) => void;
 }
 
 /**
  * @param inputProps.maxLength may be set to "null" to disable the automatically applied limit that's based on the current format rules.
  */
-export function AnkTextField<TValue>({ ank, blankDisabled, inputProps, ...rest }: AnkTextFieldProps<TValue>): JSX.Element {
+export function AnkTextField<TValue>({ ank, blankDisabled, onRawChange, inputProps, ...rest }: AnkTextFieldProps<TValue>): JSX.Element {
     const [raw, setRaw] = useState(ank.raw);
     const [suppressError, setSuppressError] = useState(false);
     // TODO: we suppress error on focus because ank.error doesn't update as we edit - but we can still call ank.format.parse (+"required" logic)
@@ -27,6 +29,8 @@ export function AnkTextField<TValue>({ ank, blankDisabled, inputProps, ...rest }
         setRaw(e.target.value);
         if (rest.select)
             commit(e.target.value); // select controls commit the value on select, without waiting for a focus change
+        if (onRawChange)
+            onRawChange(e.target.value);
     }
     function handleFocus() {
         setSuppressError(true);

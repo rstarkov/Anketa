@@ -22,13 +22,15 @@ interface AnkDateTextFieldProps extends React.ComponentProps<typeof TextField> {
     ank: AnkValueBase<DateTime, string>;
     /** Set to true to automatically show an empty value when the control is disabled, without clearing the actual underlying value. */
     blankDisabled?: boolean;
+    /** Invoked on every raw value change. */
+    onRawChange?: (raw: string) => void;
     /** If set, a button is added in the calendar picker footer for the start or end of the current month. */
     buttonMonth?: "start" | "end";
     /** The z-index for the calendar picker. Defaults to 1300 (the default MUI dialog zIndex). */
     zIndex?: number;
 }
 
-export function AnkDateTextField({ ank, blankDisabled, buttonMonth, zIndex, ...rest }: AnkDateTextFieldProps): JSX.Element {
+export function AnkDateTextField({ ank, blankDisabled, onRawChange, buttonMonth, zIndex, ...rest }: AnkDateTextFieldProps): JSX.Element {
     const [raw, setRaw] = useState(ank.raw);
     const [suppressError, setSuppressError] = useState(false); // TODO: we suppress error on focus because ank.error doesn't update as we edit - but we can still call ank.format.parse (+"required" logic)
     const [open, setOpen] = useState(false);
@@ -39,6 +41,11 @@ export function AnkDateTextField({ ank, blankDisabled, buttonMonth, zIndex, ...r
             setRaw(ank.raw);
     }, [ank.raw]);
 
+    function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+        setRaw(e.target.value);
+        if (onRawChange)
+            onRawChange(e.target.value);
+    }
     function handleFocus() {
         setSuppressError(true);
     }
@@ -67,7 +74,7 @@ export function AnkDateTextField({ ank, blankDisabled, buttonMonth, zIndex, ...r
     }
 
     return <>
-        <TextField {...rest} value={blankDisabled && rest.disabled ? "" : raw} onChange={e => setRaw(e.target.value)}
+        <TextField {...rest} value={blankDisabled && rest.disabled ? "" : raw} onChange={handleChange}
             onFocus={handleFocus} onBlur={handleBlur} onKeyDown={handleKeyDown}
             error={!suppressError && !!ank.error} helperText={(!suppressError && ank.error) ?? rest.helperText}
             ref={anchorRef}
