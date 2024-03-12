@@ -125,9 +125,21 @@ test("AnkTextField drop-down behaviours @anketa", async ({ page }) => {
     await page.goto("/test/basic");
     const tbDropReq = page.getByTestId("ank-drop-req-inp").locator("input");
     await checkAnkDropdown(page, "ank-drop-req", "", "<undefined>", undefined);
+    await page.getByLabel('Ank Drop-down Req *').click();
+    await page.getByRole('option', { name: 'Two' }).click();
+    await checkAnkDropdown(page, "ank-drop-req", "two", "string: two", undefined);
 });
 
 // test suppress error
 // test submit invalid with suppressed errors
 
 //await page.screenshot({ path: "foo1.png" });
+
+// test("AnkValue submit", async ({ page }) => {
+//     await page.goto("/test/basic");
+//     const tbAmountReq = page.getByTestId("ank-amount-req-inp").getByRole("textbox");
+//     const tbTextReq = page.getByTestId("ank-text-req-inp").getByRole("textbox");
+//     await checkAnkTextbox(page, "ank-amount-req", "", "<undefined>", undefined);
+//     await checkAnkTextbox(page, "ank-text-req", "", "string: ", undefined);
+//     await page.getByTestId("submit").click();
+// });

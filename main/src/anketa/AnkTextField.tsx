@@ -25,24 +25,26 @@ export function AnkTextField<TValue>({ ank, blankDisabled, inputProps, ...rest }
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
         setRaw(e.target.value);
+        if (rest.select)
+            commit(e.target.value); // select controls commit the value on select, without waiting for a focus change
     }
     function handleFocus() {
         setSuppressError(true);
     }
     function handleBlur() {
         setSuppressError(false);
-        commit();
+        commit(raw);
     }
     function handleKeyDown(e: React.KeyboardEvent) {
         if (isKey(e, "Enter")) {
             setSuppressError(false);
-            commit();
+            commit(raw);
         } else {
             setSuppressError(true);
         }
     }
-    function commit() {
-        const newraw = ank.commitRaw(raw);
+    function commit(actualRaw: string) {
+        const newraw = ank.commitRaw(actualRaw);
         if (newraw !== undefined)
             setRaw(newraw); // this ensures that the raw value gets re-formatted per the format even if the parsed value didn't change
     }
