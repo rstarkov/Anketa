@@ -18,6 +18,8 @@ export interface AnkValueBase<TValue, TRaw, TReq extends boolean = boolean> {
     commitRaw: (raw: TRaw) => TRaw | undefined;
     /** Sets the error display mode. */
     setErrorMode: (mode: AnkErrorMode) => void;
+    /** Sets the error text ONCE. This error text gets cleared on the next value update, and is only useful to call directly in form submit handler, esp for async validations. */
+    setError: (error: string) => void;
 }
 
 export interface AnkValue<TValue, TRaw, TReq extends boolean = boolean> extends AnkValueBase<TValue, TRaw, TReq> {
@@ -69,6 +71,9 @@ export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TV
     function setErrorMode(mode: AnkErrorMode) {
         internalSetErrorMode(mode);
     }
+    function setError(error: string) {
+        internalSetResult({ ...result, error });
+    }
 
     let error = errorMode === "initial" ? undefined : result.error;
     if (errorMode === "submit" && error === undefined && format.isRequired && result.isEmpty)
@@ -86,5 +91,6 @@ export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TV
         commitRaw,
         clear,
         setErrorMode,
+        setError,
     };
 }
