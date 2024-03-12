@@ -73,7 +73,7 @@ export function AnkDateTextField({ ank, buttonMonth, zIndex, ...rest }: AnkDateT
             required={ank.required}
             InputProps={{
                 endAdornment: (
-                    <InputAdornment position="end" >
+                    <InputAdornment position="end" sx={{ ml: 0 }}>
                         <IconButton edge="end" onClick={() => setOpen(o => !o)} ><CalendarMonthIcon /></IconButton>
                     </InputAdornment >
                 ),
