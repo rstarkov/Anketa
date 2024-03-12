@@ -30,7 +30,7 @@ async function checkAnkDropdown(page: Page, testid: string, raw: string, trueval
     }
 }
 
-test("AnkTextField initial values @anketa", async ({ page }) => {
+test("AnkTextField initial values", async ({ page }) => {
     await page.goto("/test/basic");
 
     // Initial values as passed into useAnk
@@ -40,7 +40,7 @@ test("AnkTextField initial values @anketa", async ({ page }) => {
     await checkAnkTextbox(page, "ank-initial-text-2", "foo", "string: foo", undefined);
 });
 
-test("AnkTextField basic user editing @anketa", async ({ page }) => {
+test("AnkTextField basic user editing", async ({ page }) => {
     await page.goto("/test/basic");
     const tbAmountReq = page.getByTestId("ank-amount-req-inp").getByRole("textbox");
     const tbTextReq = page.getByTestId("ank-text-req-inp").getByRole("textbox");
@@ -82,7 +82,7 @@ test("AnkTextField basic user editing @anketa", async ({ page }) => {
     await checkAnkTextbox(page, "ank-amount-req", "25.51", "number: 25.51", undefined);
 });
 
-test("AnkTextField programmatic editing @anketa", async ({ page }) => {
+test("AnkTextField programmatic editing", async ({ page }) => {
     await page.goto("/test/basic");
     const tbAmountReq = page.getByTestId("ank-amount-req-inp").getByRole("textbox");
     const tbTextReq = page.getByTestId("ank-text-req-inp").getByRole("textbox");
@@ -121,7 +121,7 @@ test("AnkTextField programmatic editing @anketa", async ({ page }) => {
     await checkAnkTextbox(page, "ank-text-req", "foo", "string: foo", undefined);
 });
 
-test("AnkTextField drop-down behaviours @anketa", async ({ page }) => {
+test("AnkTextField drop-down behaviours", async ({ page }) => {
     await page.goto("/test/basic");
     await checkAnkDropdown(page, "ank-drop-req", "", "<undefined>", undefined);
     await page.getByLabel('Ank Drop-down Req *').click();
