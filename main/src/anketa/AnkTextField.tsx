@@ -38,7 +38,8 @@ export function AnkTextField<TValue>({ ank, blankDisabled, inputProps, ...rest }
     function handleKeyDown(e: React.KeyboardEvent) {
         if (isKey(e, "Enter")) {
             setSuppressError(false);
-            commit(raw);
+            if (!rest.select)
+                commit(raw); // it's committed in the change event anyway, and at this point here the "raw" hasn't been updated yet by the MUI control, breaking Enter
         } else {
             setSuppressError(true);
         }

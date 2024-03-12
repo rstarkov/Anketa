@@ -123,11 +123,17 @@ test("AnkTextField programmatic editing @anketa", async ({ page }) => {
 
 test("AnkTextField drop-down behaviours @anketa", async ({ page }) => {
     await page.goto("/test/basic");
-    const tbDropReq = page.getByTestId("ank-drop-req-inp").locator("input");
     await checkAnkDropdown(page, "ank-drop-req", "", "<undefined>", undefined);
     await page.getByLabel('Ank Drop-down Req *').click();
     await page.getByRole('option', { name: 'Two' }).click();
     await checkAnkDropdown(page, "ank-drop-req", "two", "string: two", undefined);
+
+    await page.getByTestId('clear').click();
+    await page.getByLabel('Ank Drop-down Req *').press('ArrowDown');
+    await page.getByRole('option', { name: 'One' }).press('ArrowDown');
+    await page.getByRole('option', { name: 'Two' }).press('ArrowDown');
+    await page.getByRole('option', { name: 'Three' }).press('Enter');
+    await checkAnkDropdown(page, "ank-drop-req", "three", "string: three", undefined);
 });
 
 // test suppress error
