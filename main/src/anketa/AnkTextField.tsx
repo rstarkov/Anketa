@@ -6,12 +6,14 @@ import { isStringLikeFormat } from ".";
 
 export interface AnkTextFieldProps<TValue> extends React.ComponentProps<typeof TextField> {
     ank: AnkValueBase<TValue, string>;
+    /** Set to true to automatically show an empty value when the control is disabled, without clearing the actual underlying value. */
+    blankDisabled?: boolean;
 }
 
 /**
  * @param inputProps.maxLength may be set to "null" to disable the automatically applied limit that's based on the current format rules.
  */
-export function AnkTextField<TValue>({ ank, inputProps, ...rest }: AnkTextFieldProps<TValue>): JSX.Element {
+export function AnkTextField<TValue>({ ank, blankDisabled, inputProps, ...rest }: AnkTextFieldProps<TValue>): JSX.Element {
     const [raw, setRaw] = useState(ank.raw);
     const [suppressError, setSuppressError] = useState(false);
     // TODO: we suppress error on focus because ank.error doesn't update as we edit - but we can still call ank.format.parse (+"required" logic)
@@ -51,6 +53,6 @@ export function AnkTextField<TValue>({ ank, inputProps, ...rest }: AnkTextFieldP
     else if (isStringLikeFormat(ank.format))
         inputProps.maxLength = ank.format._maxLen;
 
-    return <TextField {...rest} inputProps={inputProps} value={raw} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur} onKeyDown={handleKeyDown}
+    return <TextField {...rest} inputProps={inputProps} value={blankDisabled && rest.disabled ? "" : raw} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur} onKeyDown={handleKeyDown}
         required={ank.required} error={!suppressError && !!ank.error} helperText={(!suppressError && ank.error) ?? rest.helperText} />;
 }
