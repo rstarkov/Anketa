@@ -16,6 +16,20 @@ async function checkAnkTextbox(page: Page, testid: string, raw: string, trueval:
     // TODO? blur+focus+blur must never change any of the values because the values should already all be up-to-date
 }
 
+async function checkAnkDropdown(page: Page, testid: string, raw: string, trueval: string, error: string | undefined) {
+    await expect(page.getByTestId(`${testid}-trueval`)).toHaveText(trueval);
+    await expect(page.getByTestId(`${testid}-trueerr`)).toHaveText(error === undefined ? "<undefined>" : `string: ${error.replaceAll(" ", "_")}`);
+    await expect(page.getByTestId(`${testid}-inp`).locator("input")).toHaveValue(raw);
+    if (error === undefined) {
+        await expect(page.getByTestId(`${testid}-inp`).locator("label.MuiInputLabel-root")).not.toHaveClass("Mui-error");
+        await expect(page.getByTestId(`${testid}-inp`).locator("p.MuiFormHelperText-root")).toHaveCount(0);
+    } else {
+        await expect(page.getByTestId(`${testid}-inp`).locator("label.MuiInputLabel-root")).toHaveClass(/\bMui-error\b/);
+        await expect(page.getByTestId(`${testid}-inp`).locator("p.MuiFormHelperText-root")).toBeVisible();
+        await expect(page.getByTestId(`${testid}-inp`).locator("p.MuiFormHelperText-root")).toHaveText(error);
+    }
+}
+
 test("AnkTextField initial values @anketa", async ({ page }) => {
     await page.goto("/test/basic");
 
@@ -105,6 +119,12 @@ test("AnkTextField programmatic editing @anketa", async ({ page }) => {
     await tbTextReq.fill("  foo ");
     await tbTextReq.blur();
     await checkAnkTextbox(page, "ank-text-req", "foo", "string: foo", undefined);
+});
+
+test("AnkTextField drop-down behaviours @anketa", async ({ page }) => {
+    await page.goto("/test/basic");
+    const tbDropReq = page.getByTestId("ank-drop-req-inp").locator("input");
+    await checkAnkDropdown(page, "ank-drop-req", "", "<undefined>", undefined);
 });
 
 // test suppress error

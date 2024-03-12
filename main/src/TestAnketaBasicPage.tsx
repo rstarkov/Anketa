@@ -1,4 +1,4 @@
-import { Button, Unstable_Grid2 as Grid2 } from "@mui/material";
+import { Button, Unstable_Grid2 as Grid2, MenuItem } from "@mui/material";
 import { DateTime } from "luxon";
 import { AnkDateTextField, AnkTextField, ank, useAnkValue } from "./anketa";
 import { unreachable } from "./util";
@@ -18,11 +18,13 @@ const fmtTextReq = fmtText.required();
 const fmtAmount = ank.parseNumber("Enter a valid number.").positive("Enter a value greater than 0.").decimals2("No more than 2 digits for pence.");
 const fmtAmountReq = fmtAmount.required();
 const fmtDateReq = ank.parseDate().required();
+const fmtDropReq = ank.parseString(true).required();
 
 export function TestAnketaBasicPage(): JSX.Element {
     const textReq = useAnkValue(null, fmtTextReq);
     const amountReq = useAnkValue(null, fmtAmountReq);
     const dateReq = useAnkValue(null, fmtDateReq);
+    const dropReq = useAnkValue(null, fmtDropReq);
 
     const initialAmount1 = useAnkValue(23.7, fmtAmountReq);
     const initialAmount2 = useAnkValue(23.701, fmtAmountReq);
@@ -40,10 +42,14 @@ export function TestAnketaBasicPage(): JSX.Element {
     function clickClear() {
         textReq.clear();
         amountReq.clear();
+        dateReq.clear();
+        dropReq.clear();
     }
     function clickSubmit() {
         textReq.setErrorMode("submit");
         amountReq.setErrorMode("submit");
+        dateReq.setErrorMode("submit");
+        dropReq.setErrorMode("submit");
     }
 
     return <div>
@@ -62,6 +68,14 @@ export function TestAnketaBasicPage(): JSX.Element {
             <Grid2 sm={3} data-testid="ank-date-req-inp"><AnkDateTextField ank={dateReq} label="Ank Date Req" size="small" fullWidth /></Grid2>
             <Grid2 sm={3} data-testid="ank-date-req-trueval">{strTestVal(dateReq.value)}</Grid2>
             <Grid2 sm={6} data-testid="ank-date-req-trueerr">{strTestVal(dateReq.error)}</Grid2>
+
+            <Grid2 sm={3} data-testid="ank-drop-req-inp"><AnkTextField ank={dropReq} label="Ank Drop-down Req" size="small" select fullWidth>
+                <MenuItem value="one">One</MenuItem>
+                <MenuItem value="two">Two</MenuItem>
+                <MenuItem value="three">Three</MenuItem>
+            </AnkTextField></Grid2>
+            <Grid2 sm={3} data-testid="ank-drop-req-trueval">{strTestVal(dropReq.value)}</Grid2>
+            <Grid2 sm={6} data-testid="ank-drop-req-trueerr">{strTestVal(dropReq.error)}</Grid2>
 
             <Grid2 sm={3}><Button onClick={clickSet1} data-testid="set1" variant="contained" fullWidth>Set 1</Button></Grid2>
             <Grid2 sm={3}><Button onClick={clickSet2} data-testid="set2" variant="contained" fullWidth>Set 2</Button></Grid2>

@@ -1,8 +1,8 @@
 import { DateTime } from "luxon";
 
 export class ank {
-    static parseString(): StringAnkFormat<boolean> {
-        return new StringAnkFormat(false)._parse();
+    static parseString(emptyUndefined?: boolean): StringAnkFormat<boolean> {
+        return new StringAnkFormat(false)._parse(emptyUndefined ?? false);
     }
 
     static parseNumber(message?: string): NumberAnkFormat<boolean> {
@@ -87,10 +87,13 @@ export class StringAnkFormat<TRequired extends boolean> extends AnkFormat<string
     _minLen: number | undefined;
     _maxLen: number | undefined;
 
-    _parse(): this {
+    _parse(emptyUndefined: boolean): this {
         return this.extendWith(s => {
-            s.parsed = s.raw;
-            s.isEmpty = s.parsed === "";
+            if (emptyUndefined)
+                s.parsed = s.raw === "" ? undefined : s.raw;
+            else
+                s.parsed = s.raw;
+            s.isEmpty = s.raw === "";
         });
     }
 
