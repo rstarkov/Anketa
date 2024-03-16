@@ -61,5 +61,5 @@ export function AnkTextField<TValue>({ ank, blankDisabled, onRawChange, inputPro
         inputProps.maxLength = ank.format._maxLen;
 
     return <TextField {...rest} inputProps={inputProps} value={blankDisabled && rest.disabled ? "" : raw} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur} onKeyDown={handleKeyDown}
-        required={ank.required} error={!suppressError && !!ank.error} helperText={(!suppressError && ank.error) ?? rest.helperText} />;
+        required={ank.required} error={rest.error === undefined ? (!suppressError && !!ank.error) : rest.error} helperText={(!suppressError && ank.error) ?? rest.helperText} />;
 }

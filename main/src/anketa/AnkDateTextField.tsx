@@ -76,7 +76,7 @@ export function AnkDateTextField({ ank, blankDisabled, onRawChange, buttonMonth,
     return <>
         <TextField {...rest} value={blankDisabled && rest.disabled ? "" : raw} onChange={handleChange}
             onFocus={handleFocus} onBlur={handleBlur} onKeyDown={handleKeyDown}
-            error={!suppressError && !!ank.error} helperText={(!suppressError && ank.error) ?? rest.helperText}
+            error={rest.error === undefined ? (!suppressError && !!ank.error) : rest.error} helperText={(!suppressError && ank.error) ?? rest.helperText}
             ref={anchorRef}
             focused={open ? true : undefined}
             required={ank.required}
