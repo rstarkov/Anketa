@@ -71,7 +71,8 @@ export function AnkTextField<TValue>({ ank, blankDisabled, onRawChange, noErrorT
 
     return <TextField {...rest} value={blankDisabled && rest.disabled ? "" : raw} onChange={handleChange}
         onFocus={handleFocus} onBlur={handleBlur} onKeyDown={handleKeyDown}
-        error={rest.error === undefined ? (!activelyEditing && !!ank.error) : rest.error} helperText={(!activelyEditing && ank.error !== undefined && !noErrorText) ? ank.error : rest.helperText}
+        error={rest.error === undefined ? (!activelyEditing && !!ank.error) : rest.error}
+        helperText={(!activelyEditing && ank.error !== undefined && !noErrorText) ? ank.error : rest.helperText}
         required={ank.required}
         inputProps={inputProps}
     />;
