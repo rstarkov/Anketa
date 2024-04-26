@@ -18,19 +18,23 @@ import type { AnkValueBase } from "./value";
 
 // TODO: use MUI @mui/x-date-pickers date adapters instead of hard-coding luxon
 
+type DatePreset = "month-start" | "month-end" | "prev-month-start" | "prev-month-end" | "year-start" | "year-end" | "prev-year-start" | "prev-year-end" | DateTime;
+
 interface AnkDateTextFieldProps extends React.ComponentProps<typeof TextField> {
     ank: AnkValueBase<DateTime, string>;
     /** Set to true to automatically show an empty value when the control is disabled, without clearing the actual underlying value. */
     blankDisabled?: boolean;
     /** Invoked on every raw value change. */
     onRawChange?: (raw: string) => void;
-    /** If set, a button is added in the calendar picker footer for the start or end of the current month. */
-    buttonMonth?: "start" | "end";
+    /** If set, a button is added in the calendar picker footer for this date. If two presets are specified the "yesterday" preset is omitted. */
+    preset1?: DatePreset;
+    /** If set, a button is added in the calendar picker footer for this date. If two presets are specified the "yesterday" preset is omitted. */
+    preset2?: DatePreset;
     /** The z-index for the calendar picker. Defaults to 1300 (the default MUI dialog zIndex). */
     zIndex?: number;
 }
 
-export function AnkDateTextField({ ank, blankDisabled, onRawChange, buttonMonth, zIndex, ...rest }: AnkDateTextFieldProps): JSX.Element {
+export function AnkDateTextField({ ank, blankDisabled, onRawChange, preset1, preset2, zIndex, ...rest }: AnkDateTextFieldProps): JSX.Element {
     const [raw, setRaw] = useState(ank.raw);
     const [activelyEditing, setActivelyEditing] = useState(false); // TODO: we suppress error on focus because ank.error doesn't update as we edit - but we can still call ank.format.parse (+"required" logic)
     const [open, setOpen] = useState(false);
@@ -94,7 +98,7 @@ export function AnkDateTextField({ ank, blankDisabled, onRawChange, buttonMonth,
                         <GlobalEscHandler onEsc={() => setOpen(false)} />
                         <ClickAwayListener onClickAway={() => setOpen(false)}>
                             <div>{/* div is required for clickaway listener to work correctly */}
-                                <CustomDateCalendar value={ank.value ?? null} onChange={d => datePicked(d ?? undefined)} buttonMonth={buttonMonth} minDate={ank.format._min} maxDate={ank.format._max} />
+                                <CustomDateCalendar value={ank.value ?? null} onChange={d => datePicked(d ?? undefined)} preset1={preset1} preset2={preset2} minDate={ank.format._min} maxDate={ank.format._max} />
                             </div>
                         </ClickAwayListener>
                     </div>
@@ -128,20 +132,34 @@ const CalendarFooterDiv = styled("div")`
 `;
 
 interface CustomDateCalendarProps extends DateCalendarProps<DateTime> {
-    buttonMonth?: "start" | "end";
+    preset1?: DatePreset;
+    preset2?: DatePreset;
 }
 
-function CustomDateCalendar({ buttonMonth, ...rest }: CustomDateCalendarProps) {
-    const monthDate = buttonMonth == undefined ? null
-        : buttonMonth == "start" ? DateTime.now().startOf("month")
-            : buttonMonth == "end" ? DateTime.now().startOf("month").plus({ months: 1 }).plus({ days: -1 })
-                : unreachable(buttonMonth);
+function CustomDateCalendar({ preset1, preset2, ...rest }: CustomDateCalendarProps) {
+    function presetDate(p: DatePreset | undefined): DateTime | undefined {
+        if (typeof p !== "string") return p; // includes undefined
+        if (p == "month-start") return DateTime.now().startOf("month");
+        if (p == "month-end") return DateTime.now().startOf("month").plus({ months: 1 }).plus({ days: -1 });
+        if (p == "prev-month-start") return DateTime.now().startOf("month").plus({ months: -1 });
+        if (p == "prev-month-end") return DateTime.now().startOf("month").plus({ days: -1 });
+        if (p == "year-start") return DateTime.now().startOf("year");
+        if (p == "year-end") return DateTime.now().startOf("year").plus({ years: 1 }).plus({ days: -1 });
+        if (p == "prev-year-start") return DateTime.now().startOf("year").plus({ years: -1 });
+        if (p == "prev-year-end") return DateTime.now().startOf("year").plus({ days: -1 });
+        return unreachable(p);
+    }
+    const date1 = presetDate(preset1);
+    const d2 = presetDate(preset2);
+    const date2 = date1 && d2 && date1.equals(d2) ? undefined : d2;
+    const showYesterday = date1 == undefined || date2 == undefined;
     return <CalendarContainerDiv>
         <DateCalendar {...rest} slots={{ day: CustomDay, calendarHeader: CustomHeader }} views={["day"]} dayOfWeekFormatter={(_, d) => d.toLocaleString({ weekday: "short" }).substring(0, 2)} />
         <CalendarFooterDiv>
             <Button size="small" onClick={() => rest.onChange!(DateTime.now().startOf("day"))}>today</Button>
-            <Button size="small" onClick={() => rest.onChange!(DateTime.now().startOf("day").plus({ days: -1 }))}>yesterday</Button>
-            {monthDate && <Button size="small" onClick={() => rest.onChange!(monthDate)}>{monthDate.toFormat("d MMM yyyy")}</Button>}
+            {showYesterday && <Button size="small" onClick={() => rest.onChange!(DateTime.now().startOf("day").plus({ days: -1 }))}>yesterday</Button>}
+            {date1 && <Button size="small" onClick={() => rest.onChange!(date1)}>{date1.toFormat("d MMM yyyy")}</Button>}
+            {date2 && <Button size="small" onClick={() => rest.onChange!(date2)}>{date2.toFormat("d MMM yyyy")}</Button>}
         </CalendarFooterDiv>
     </CalendarContainerDiv>;
 }
