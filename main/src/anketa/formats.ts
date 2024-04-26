@@ -101,6 +101,11 @@ export class StringAnkFormat<TRequired extends boolean> extends AnkFormat<string
         return this.parse(val);
     }
 
+    required(message?: string): StringAnkFormat<true> {
+        // the only reason we have to duplicate the base method is to define the return type as StringAnkFormat, as it's not possible for the base class to say something like `this<TReq=true>`
+        return super.required(message) as StringAnkFormat<true>;
+    }
+
     trim(): this {
         return this.extendWith(s => {
             if (s.error !== undefined || s.parsed === undefined)
@@ -140,6 +145,16 @@ export class StringAnkFormat<TRequired extends boolean> extends AnkFormat<string
             if (!/^[^@]+@[^@]+\.[^@]+$/.test(s.parsed))
                 s.error = message ?? "Valid email address required.";
         });
+    }
+
+    oneOf<TStr extends string>(values: TStr[], message?: string): AnkFormat<TStr, string, TRequired> {
+        // It should really return a StringAnkFormat<TValue=TStr> but we're not quite there yet
+        return this.extendWith(s => {
+            if (s.error !== undefined || s.parsed === undefined || s.isEmpty)
+                return;
+            if (!(values as string[]).includes(s.parsed))
+                s.error = message ?? "Invalid value.";
+        }) as unknown as AnkFormat<TStr, string, TRequired>; // ts(2352) is probably spurious; add "as unknown" to suppress
     }
 }
 
