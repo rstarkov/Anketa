@@ -10,12 +10,14 @@ export interface AnkTextFieldProps<TValue> extends React.ComponentProps<typeof T
     blankDisabled?: boolean;
     /** Invoked on every raw value change. */
     onRawChange?: (raw: string) => void;
+    /** If true the error text is hidden at all times. */
+    noErrorText?: boolean;
 }
 
 /**
  * @param inputProps.maxLength may be set to "null" to disable the automatically applied limit that's based on the current format rules.
  */
-export function AnkTextField<TValue>({ ank, blankDisabled, onRawChange, inputProps, ...rest }: AnkTextFieldProps<TValue>): JSX.Element {
+export function AnkTextField<TValue>({ ank, blankDisabled, onRawChange, noErrorText, inputProps, ...rest }: AnkTextFieldProps<TValue>): JSX.Element {
     const [raw, setRaw] = useState(ank.raw);
     const [activelyEditing, setActivelyEditing] = useState(false);
     // TODO: we suppress error on focus because ank.error doesn't update as we edit - but we can still call ank.format.parse (+"required" logic)
@@ -69,7 +71,7 @@ export function AnkTextField<TValue>({ ank, blankDisabled, onRawChange, inputPro
 
     return <TextField {...rest} value={blankDisabled && rest.disabled ? "" : raw} onChange={handleChange}
         onFocus={handleFocus} onBlur={handleBlur} onKeyDown={handleKeyDown}
-        error={rest.error === undefined ? (!activelyEditing && !!ank.error) : rest.error} helperText={(!activelyEditing && ank.error !== undefined) ? ank.error : rest.helperText}
+        error={rest.error === undefined ? (!activelyEditing && !!ank.error) : rest.error} helperText={(!activelyEditing && ank.error !== undefined && !noErrorText) ? ank.error : rest.helperText}
         required={ank.required}
         inputProps={inputProps}
     />;

@@ -26,6 +26,8 @@ interface AnkDateTextFieldProps extends React.ComponentProps<typeof TextField> {
     blankDisabled?: boolean;
     /** Invoked on every raw value change. */
     onRawChange?: (raw: string) => void;
+    /** If true the error text is hidden at all times. */
+    noErrorText?: boolean;
     /** If set, a button is added in the calendar picker footer for this date. If two presets are specified the "yesterday" preset is omitted. */
     preset1?: DatePreset;
     /** If set, a button is added in the calendar picker footer for this date. If two presets are specified the "yesterday" preset is omitted. */
@@ -34,7 +36,7 @@ interface AnkDateTextFieldProps extends React.ComponentProps<typeof TextField> {
     zIndex?: number;
 }
 
-export function AnkDateTextField({ ank, blankDisabled, onRawChange, preset1, preset2, zIndex, ...rest }: AnkDateTextFieldProps): JSX.Element {
+export function AnkDateTextField({ ank, blankDisabled, onRawChange, noErrorText, preset1, preset2, zIndex, ...rest }: AnkDateTextFieldProps): JSX.Element {
     const [raw, setRaw] = useState(ank.raw);
     const [activelyEditing, setActivelyEditing] = useState(false); // TODO: we suppress error on focus because ank.error doesn't update as we edit - but we can still call ank.format.parse (+"required" logic)
     const [open, setOpen] = useState(false);
@@ -87,7 +89,7 @@ export function AnkDateTextField({ ank, blankDisabled, onRawChange, preset1, pre
     return <>
         <TextField {...rest} value={blankDisabled && rest.disabled ? "" : raw} onChange={handleChange}
             onFocus={handleFocus} onBlur={handleBlur} onKeyDown={handleKeyDown}
-            error={rest.error === undefined ? (!activelyEditing && !!ank.error) : rest.error} helperText={(!activelyEditing && ank.error !== undefined) ? ank.error : rest.helperText}
+            error={rest.error === undefined ? (!activelyEditing && !!ank.error) : rest.error} helperText={(!activelyEditing && ank.error !== undefined && !noErrorText) ? ank.error : rest.helperText}
             ref={anchorRef}
             focused={open ? true : undefined}
             required={ank.required}
