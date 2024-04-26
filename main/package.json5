@@ -4,7 +4,7 @@
     dev: 'pnpm install && vite',
     build: 'pnpm install && tsc && eslint --fix . && vite build',
     preview: 'pnpm install && vite preview',
-    fix: 'pnpm install && eslint --fix .',
+    fix: 'pnpm install && tsc && eslint --fix .',
     lint: 'pnpm install && eslint .',
   },
   dependencies: {
