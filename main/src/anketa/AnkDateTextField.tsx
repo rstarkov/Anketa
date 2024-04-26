@@ -112,7 +112,7 @@ export function AnkDateTextField({ ank, blankDisabled, onRawChange, noErrorText,
                         <GlobalEscHandler onEsc={() => setOpen(false)} />
                         <ClickAwayListener onClickAway={() => setOpen(false)}>
                             <div>{/* div is required for clickaway listener to work correctly */}
-                                <CustomDateCalendar value={ank.value ?? null} onChange={d => datePicked(d ?? undefined)} preset1={preset1} preset2={preset2} minDate={ank.format._min} maxDate={ank.format._max} />
+                                <AnkDateCalendar value={ank.value ?? null} onChange={d => datePicked(d ?? undefined)} preset1={preset1} preset2={preset2} minDate={ank.format._min} maxDate={ank.format._max} />
                             </div>
                         </ClickAwayListener>
                     </div>
@@ -145,12 +145,12 @@ const CalendarFooterDiv = styled("div")`
     }
 `;
 
-interface CustomDateCalendarProps extends DateCalendarProps<DateTime> {
+export interface AnkDateCalendarProps extends DateCalendarProps<DateTime> {
     preset1?: DatePreset;
     preset2?: DatePreset;
 }
 
-function CustomDateCalendar({ preset1, preset2, ...rest }: CustomDateCalendarProps) {
+export function AnkDateCalendar({ preset1, preset2, ...rest }: AnkDateCalendarProps) {
     function presetDate(p: DatePreset | undefined): DateTime | undefined {
         if (typeof p !== "string") return p; // includes undefined
         if (p == "month-start") return DateTime.now().startOf("month");
