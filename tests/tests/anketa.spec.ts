@@ -136,6 +136,60 @@ test("AnkTextField drop-down behaviours", async ({ page }) => {
     await checkAnkDropdown(page, "ank-drop-req", "three", "string: three", undefined);
 });
 
+test("AnkTextField noErrorText", async ({ page }) => {
+    async function checkTextbox(testid: string, red: boolean, hintText: string | undefined) {
+        const boxdiv = page.getByTestId(testid);
+        const hint = boxdiv.locator(".MuiFormHelperText-root");
+        if (hintText !== undefined)
+            await expect(hint).toBeVisible();
+        else
+            await expect(hint).toBeHidden();
+        if (hintText !== undefined)
+            await expect(hint).toHaveText(hintText);
+        if (red)
+            await expect(boxdiv.locator(".MuiInputBase-root")).toHaveClass(/\bMui-error\b/);
+        else
+            await expect(boxdiv.locator(".MuiInputBase-root")).not.toHaveClass(/\bMui-error\b/);
+    }
+    await page.goto("/test/basic");
+
+    // check initial empty state on form load
+    await checkTextbox("ank-yeserrortext", false, undefined);
+    await checkTextbox("ank-noerrortext", false, undefined);
+    await checkTextbox("ank-yeserrortext-hint", false, "some help");
+    await checkTextbox("ank-noerrortext-hint", false, "more help");
+
+    // check state when the field has an invalid value
+    await page.getByTestId("ank-noerrortext").getByRole("textbox").fill("foo");
+    await page.getByTestId("ank-noerrortext").getByRole("textbox").blur();
+    await checkTextbox("ank-yeserrortext", true, "Enter a valid number.");
+    await checkTextbox("ank-noerrortext", true, undefined); // there's no hint shown even though there's an error and the box is red
+    await checkTextbox("ank-yeserrortext-hint", true, "Enter a valid number.");
+    await checkTextbox("ank-noerrortext-hint", true, "more help"); // the hint must remain visible even though there's an error and the box is red
+
+    // invalid value, but the error is forced to "": red error highlight is off
+    await page.getByTestId("set-yesnoerror-empty").click();
+    await checkTextbox("ank-yeserrortext", false, undefined);
+    await checkTextbox("ank-noerrortext", false, undefined);
+    await checkTextbox("ank-yeserrortext-hint", false, undefined); // box supplies a hint, but the "" error overrides it to not show
+    await checkTextbox("ank-noerrortext-hint", false, "more help"); // box supplies a hint, but the "" error is ignored because of noErrorText and hint shows
+
+    // check the state when the field has a valid value
+    await page.getByTestId("ank-noerrortext").getByRole("textbox").fill("123");
+    await page.getByTestId("ank-noerrortext").getByRole("textbox").blur();
+    await checkTextbox("ank-yeserrortext", false, undefined);
+    await checkTextbox("ank-noerrortext", false, undefined);
+    await checkTextbox("ank-yeserrortext-hint", false, "some help");
+    await checkTextbox("ank-noerrortext-hint", false, "more help");
+
+    // valid value, but the error is forced to "Foo Bar": red error highlight is on
+    await page.getByTestId("set-yesnoerror-foobar").click();
+    await checkTextbox("ank-yeserrortext", true, "Foo Bar");
+    await checkTextbox("ank-noerrortext", true, undefined);
+    await checkTextbox("ank-yeserrortext-hint", true, "Foo Bar");
+    await checkTextbox("ank-noerrortext-hint", true, "more help"); // error message set explicitly but the box has noErrorText so we see the hint instead
+});
+
 // test suppress error
 // test submit invalid with suppressed errors
 

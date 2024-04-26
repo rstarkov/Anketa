@@ -31,6 +31,8 @@ export function TestAnketaBasicPage(): JSX.Element {
     const initialText1 = useAnkValue(null, fmtTextReq);
     const initialText2 = useAnkValue("  foo ", fmtTextReq);
 
+    const testNoErrorText = useAnkValue(null, fmtAmountReq);
+
     function clickSet1() {
         textReq.setValue(" req  txt  ");
         amountReq.setValue(47.2);
@@ -101,6 +103,14 @@ export function TestAnketaBasicPage(): JSX.Element {
             <Grid2 sm={3} data-testid="ank-initial-text-2-trueval">{strTestVal(initialText2.value)}</Grid2>
             <Grid2 sm={6} data-testid="ank-initial-text-2-trueerr">{strTestVal(initialText2.error)}</Grid2>
         </Grid2>
+
+        <h2>Misc</h2>
+        <AnkTextField data-testid="ank-yeserrortext" ank={testNoErrorText} label="Yes error text" size="small" />
+        <AnkTextField data-testid="ank-noerrortext" ank={testNoErrorText} label="No error text" size="small" noErrorText />
+        <AnkTextField data-testid="ank-yeserrortext-hint" ank={testNoErrorText} label="Yes error text" size="small" helperText="some help" />
+        <AnkTextField data-testid="ank-noerrortext-hint" ank={testNoErrorText} label="No error text" size="small" helperText="more help" noErrorText />
+        <Button data-testid="set-yesnoerror-foobar" onClick={() => testNoErrorText.setError("Foo Bar")}>Error "Foo Bar"</Button>
+        <Button data-testid="set-yesnoerror-empty" onClick={() => testNoErrorText.setError("")}>Error ""</Button>
 
         <div style={{ height: "20rem" }}></div>
 
