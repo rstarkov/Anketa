@@ -31,7 +31,9 @@ export interface AnkForm<TValues> {
     values: TValues;
     submit: (e: React.FormEvent<HTMLElement>) => void;
     clear: () => void;
+    /** Resets all of the values specified to the specified value. Other values in the form are not affected and passing `{ }` resets nothing. */
     reset: (values: Partial<AnkFormOf<TValues>>) => void;
+    isDirty: boolean;
 }
 
 export function useAnkForm<T extends AnkFormValues>(values: T, onSubmit: (values: AnkFormOf<T>, form: AnkForm<T>) => void, onError?: () => void): AnkForm<T> {
@@ -61,11 +63,18 @@ export function useAnkForm<T extends AnkFormValues>(values: T, onSubmit: (values
         setDummy(d => d + 1);
     }
 
+    let isDirty = false;
+    for (const key in values)
+        if (Object.hasOwn(values, key))
+            if (values[key].errorMode !== "initial") // todo: this condition doesn't work during submit!
+                isDirty = true;
+
     const form = {
         values,
         submit,
         clear,
         reset,
+        isDirty,
     };
 
     useEffect(() => {
