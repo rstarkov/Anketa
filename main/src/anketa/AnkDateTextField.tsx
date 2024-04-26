@@ -6,7 +6,7 @@ import type { DateCalendarProps, PickersCalendarHeaderProps, PickersDayProps } f
 import { DateCalendar, PickersDay } from "@mui/x-date-pickers";
 import { DateTime } from "luxon";
 import { useEffect, useRef, useState } from "react";
-import { GlobalEscHandler, isKey, unreachable } from "./shared";
+import { GlobalEscHandler, isKey, unreachable, useDebounce } from "./shared";
 import type { AnkValueBase } from "./value";
 
 // We don't use the MUI-X DatePicker as-is because:
@@ -40,10 +40,17 @@ export function AnkDateTextField({ ank, blankDisabled, onRawChange, preset1, pre
     const [open, setOpen] = useState(false);
     const anchorRef = useRef<HTMLDivElement>(null);
 
+    // update the local raw when the parent is updated, except if we're actively editing (in particular, the delayed auto-commit must not cause a raw value change)
     useEffect(() => {
-        if (ank.raw !== raw)
+        if (ank.raw !== raw && !activelyEditing)
             setRaw(ank.raw);
     }, [ank.raw]);
+
+    // commit after a timeout if the user has stopped typing
+    useDebounce(() => {
+        if (ank.raw !== raw)
+            commit(true);
+    }, 500, [raw]);
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
         setRaw(e.target.value);
@@ -65,9 +72,9 @@ export function AnkDateTextField({ ank, blankDisabled, onRawChange, preset1, pre
             setActivelyEditing(true);
         }
     }
-    function commit() {
+    function commit(preserveRaw?: boolean) {
         const newraw = ank.commitRaw(raw);
-        if (newraw !== undefined)
+        if (newraw !== undefined && !preserveRaw)
             setRaw(newraw); // this ensures that the raw value gets re-formatted per the format even if the parsed value didn't change
     }
     function datePicked(d: DateTime | undefined) {

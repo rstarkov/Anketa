@@ -1,8 +1,8 @@
 import { TextField } from "@mui/material";
 import { useEffect, useState } from "react";
-import type { AnkValueBase } from "./value";
-import { isKey } from "./shared";
 import { isStringLikeFormat } from ".";
+import { isKey, useDebounce } from "./shared";
+import type { AnkValueBase } from "./value";
 
 export interface AnkTextFieldProps<TValue> extends React.ComponentProps<typeof TextField> {
     ank: AnkValueBase<TValue, string>;
@@ -20,10 +20,17 @@ export function AnkTextField<TValue>({ ank, blankDisabled, onRawChange, inputPro
     const [activelyEditing, setActivelyEditing] = useState(false);
     // TODO: we suppress error on focus because ank.error doesn't update as we edit - but we can still call ank.format.parse (+"required" logic)
 
+    // update the local raw when the parent is updated, except if we're actively editing (in particular, the delayed auto-commit must not cause a raw value change)
     useEffect(() => {
-        if (ank.raw !== raw)
+        if (ank.raw !== raw && !activelyEditing)
             setRaw(ank.raw);
     }, [ank.raw]);
+
+    // commit after a timeout if the user has stopped typing
+    useDebounce(() => {
+        if (ank.raw !== raw)
+            commit(raw, true); // it's the "raw" from some time ago, but it hasn't changed as it's in the debounce dependency list
+    }, 500, [raw]);
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
         setRaw(e.target.value);
@@ -48,9 +55,9 @@ export function AnkTextField<TValue>({ ank, blankDisabled, onRawChange, inputPro
             setActivelyEditing(true);
         }
     }
-    function commit(actualRaw: string) {
+    function commit(actualRaw: string, preserveRaw?: boolean) {
         const newraw = ank.commitRaw(actualRaw);
-        if (newraw !== undefined)
+        if (newraw !== undefined && !preserveRaw)
             setRaw(newraw); // this ensures that the raw value gets re-formatted per the format even if the parsed value didn't change
     }
 
