@@ -32,7 +32,7 @@ interface AnkDateTextFieldProps extends React.ComponentProps<typeof TextField> {
 
 export function AnkDateTextField({ ank, blankDisabled, onRawChange, buttonMonth, zIndex, ...rest }: AnkDateTextFieldProps): JSX.Element {
     const [raw, setRaw] = useState(ank.raw);
-    const [suppressError, setSuppressError] = useState(false); // TODO: we suppress error on focus because ank.error doesn't update as we edit - but we can still call ank.format.parse (+"required" logic)
+    const [activelyEditing, setActivelyEditing] = useState(false); // TODO: we suppress error on focus because ank.error doesn't update as we edit - but we can still call ank.format.parse (+"required" logic)
     const [open, setOpen] = useState(false);
     const anchorRef = useRef<HTMLDivElement>(null);
 
@@ -47,18 +47,18 @@ export function AnkDateTextField({ ank, blankDisabled, onRawChange, buttonMonth,
             onRawChange(e.target.value);
     }
     function handleFocus() {
-        setSuppressError(true);
+        setActivelyEditing(true);
     }
     function handleBlur() {
-        setSuppressError(false);
+        setActivelyEditing(false);
         commit();
     }
     function handleKeyDown(e: React.KeyboardEvent) {
         if (isKey(e, "Enter")) {
-            setSuppressError(false);
+            setActivelyEditing(false);
             commit();
         } else {
-            setSuppressError(true);
+            setActivelyEditing(true);
         }
     }
     function commit() {
@@ -76,7 +76,7 @@ export function AnkDateTextField({ ank, blankDisabled, onRawChange, buttonMonth,
     return <>
         <TextField {...rest} value={blankDisabled && rest.disabled ? "" : raw} onChange={handleChange}
             onFocus={handleFocus} onBlur={handleBlur} onKeyDown={handleKeyDown}
-            error={rest.error === undefined ? (!suppressError && !!ank.error) : rest.error} helperText={(!suppressError && ank.error) ?? rest.helperText}
+            error={rest.error === undefined ? (!activelyEditing && !!ank.error) : rest.error} helperText={(!activelyEditing && ank.error) ?? rest.helperText}
             ref={anchorRef}
             focused={open ? true : undefined}
             required={ank.required}

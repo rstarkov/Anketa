@@ -17,7 +17,7 @@ export interface AnkTextFieldProps<TValue> extends React.ComponentProps<typeof T
  */
 export function AnkTextField<TValue>({ ank, blankDisabled, onRawChange, inputProps, ...rest }: AnkTextFieldProps<TValue>): JSX.Element {
     const [raw, setRaw] = useState(ank.raw);
-    const [suppressError, setSuppressError] = useState(false);
+    const [activelyEditing, setActivelyEditing] = useState(false);
     // TODO: we suppress error on focus because ank.error doesn't update as we edit - but we can still call ank.format.parse (+"required" logic)
 
     useEffect(() => {
@@ -33,19 +33,19 @@ export function AnkTextField<TValue>({ ank, blankDisabled, onRawChange, inputPro
             onRawChange(e.target.value);
     }
     function handleFocus() {
-        setSuppressError(true);
+        setActivelyEditing(true);
     }
     function handleBlur() {
-        setSuppressError(false);
+        setActivelyEditing(false);
         commit(raw);
     }
     function handleKeyDown(e: React.KeyboardEvent) {
         if (isKey(e, "Enter")) {
-            setSuppressError(false);
+            setActivelyEditing(false);
             if (!rest.select)
                 commit(raw); // it's committed in the change event anyway, and at this point here the "raw" hasn't been updated yet by the MUI control, breaking Enter
         } else {
-            setSuppressError(true);
+            setActivelyEditing(true);
         }
     }
     function commit(actualRaw: string) {
@@ -62,7 +62,7 @@ export function AnkTextField<TValue>({ ank, blankDisabled, onRawChange, inputPro
 
     return <TextField {...rest} value={blankDisabled && rest.disabled ? "" : raw} onChange={handleChange}
         onFocus={handleFocus} onBlur={handleBlur} onKeyDown={handleKeyDown}
-        error={rest.error === undefined ? (!suppressError && !!ank.error) : rest.error} helperText={(!suppressError && ank.error) ?? rest.helperText}
+        error={rest.error === undefined ? (!activelyEditing && !!ank.error) : rest.error} helperText={(!activelyEditing && ank.error) ?? rest.helperText}
         required={ank.required}
         inputProps={inputProps}
     />;
