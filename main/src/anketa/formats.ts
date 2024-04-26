@@ -112,23 +112,25 @@ export class StringAnkFormat<TRequired extends boolean> extends AnkFormat<string
     }
 
     minLen(min: number, message?: string): this {
-        this._minLen = min;
-        return this.extendWith(s => {
+        const clone = this.extendWith(s => {
             if (s.error !== undefined || s.parsed === undefined || s.isEmpty)
                 return;
             if (s.parsed.length > min)
                 s.error = message ?? `Minimum ${min} characters.`;
         });
+        clone._minLen = min;
+        return clone;
     }
 
     maxLen(max: number, message?: string): this {
-        this._maxLen = max;
-        return this.extendWith(s => {
+        const clone = this.extendWith(s => {
             if (s.error !== undefined || s.parsed === undefined || s.isEmpty)
                 return;
             if (s.parsed.length > max)
                 s.error = message ?? `Maximum ${max} characters.`;
         });
+        clone._maxLen = max;
+        return clone;
     }
 
     email(message?: string): this {
@@ -181,23 +183,25 @@ export class NumberAnkFormat<TRequired extends boolean> extends AnkFormat<number
     }
 
     min(min: number, message?: string): this {
-        this._min = min;
-        return this.extendWith(s => {
+        const clone = this.extendWith(s => {
             if (s.error !== undefined || s.parsed === undefined || s.isEmpty)
                 return;
             if (s.parsed < min)
                 s.error = message ?? `Enter a value greater than or equal to ${this.serialise(min).raw}.`;
         });
+        clone._min = min;
+        return clone;
     }
 
     max(max: number, message?: string): this {
-        this._max = max;
-        return this.extendWith(s => {
+        const clone = this.extendWith(s => {
             if (s.error !== undefined || s.parsed === undefined || s.isEmpty)
                 return;
             if (s.parsed > max)
                 s.error = message ?? `Enter a value less than or equal to ${this.serialise(max).raw}.`;
         });
+        clone._max = max;
+        return clone;
     }
 
     decimals2(message?: string): this {
@@ -246,23 +250,25 @@ export class DateAnkFormat<TRequired extends boolean> extends AnkFormat<DateTime
     }
 
     min(min: DateTime, message?: string): this {
-        this._min = min;
-        return this.extendWith(s => {
+        const clone = this.extendWith(s => {
             if (s.error !== undefined || s.parsed === undefined || s.isEmpty)
                 return;
             if (s.parsed.startOf("day") < min.startOf("day"))
                 s.error = message ?? `Must be no earlier than ${this.serialise(min).raw}.`;
         });
+        clone._min = min;
+        return clone;
     }
 
     max(max: DateTime, message?: string): this {
-        this._max = max;
-        return this.extendWith(s => {
+        const clone = this.extendWith(s => {
             if (s.error !== undefined || s.parsed === undefined || s.isEmpty)
                 return;
             if (s.parsed.startOf("day") > max.startOf("day"))
                 s.error = message ?? `Must be no later than ${this.serialise(max).raw}.`;
         });
+        clone._max = max;
+        return clone;
     }
 
     minToday(message?: string): this {
