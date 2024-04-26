@@ -41,6 +41,7 @@ export function useAnkForm<T extends AnkFormValues>(values: T, onSubmit: (values
     const submitting = useRef(false);
 
     function submit(e: React.FormEvent<HTMLElement>) {
+        e.stopPropagation(); // otherwise if there are two forms both can get submitted
         e.preventDefault();
         // The worst corner case for this is if the user clicks "submit" with the last edited control still focused. The blur
         // event will call commitRaw, which will call some setStates. Then the click event will execute, and the submit
