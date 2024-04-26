@@ -13,8 +13,8 @@ export interface AnkValueBase<TValue, TRaw, TReq extends boolean = boolean> {
     required: TReq;
     /** Sets the control to a specific parsed value. The error is updated per validation rules. */
     setValue: (val: TValue) => void;
-    /** Resets the control to an empty value and clears the error, if any. */
-    clear: () => void;
+    /** Resets the control to an empty value, and its error mode to initial (by default). */
+    clear: (errorMode?: AnkErrorMode) => void;
     commitRaw: (raw: TRaw) => TRaw | undefined;
     /** Sets the error display mode. */
     setErrorMode: (mode: AnkErrorMode) => void;
@@ -32,7 +32,7 @@ export interface AnkValue<TValue, TRaw, TReq extends boolean = boolean> extends 
  */
 export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TValue | null, initialFormat: AnkFormat<TValue, TRaw, TReq>): AnkValue<TValue, TRaw, TReq> {
     const [result, internalSetResult] = useState(() => defaultValue === null ? initialFormat.parse(initialFormat.empty) : initialFormat.serialise(defaultValue));
-    const [errorMode, internalSetErrorMode] = useState<AnkErrorMode>("dirty"); // later: config to use "initial" instead
+    const [errorMode, internalSetErrorMode] = useState<AnkErrorMode>("initial"); // later: config to use "dirty" optionally
     const [format, _setFormat] = useState(initialFormat);
 
     function _setState(ps: ParseSerialise<TValue, TRaw>, em: AnkErrorMode | undefined) {
@@ -65,8 +65,8 @@ export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TV
             _setState(format.parse(format.empty), undefined);
         }
     }
-    function clear() {
-        _setState(format.parse(format.empty), "dirty"); // TODO: config prop to use "initial" instead
+    function clear(errorMode: AnkErrorMode = "initial") {
+        _setState(format.parse(format.empty), errorMode);
     }
     function setErrorMode(mode: AnkErrorMode) {
         internalSetErrorMode(mode);

@@ -35,7 +35,7 @@ test("AnkTextField initial values", async ({ page }) => {
 
     // Initial values as passed into useAnk
     await checkAnkTextbox(page, "ank-initial-amount-1", "23.70", "number: 23.7", undefined);
-    await checkAnkTextbox(page, "ank-initial-amount-2", "23.701", "number: 23.701", "No more than 2 digits for pence.");
+    await checkAnkTextbox(page, "ank-initial-amount-2", "23.701", "number: 23.701", undefined); // even though it's errored, it hasn't been touched yet so no error
     await checkAnkTextbox(page, "ank-initial-text-1", "", "string: ", undefined);
     await checkAnkTextbox(page, "ank-initial-text-2", "foo", "string: foo", undefined);
 });

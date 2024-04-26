@@ -30,6 +30,7 @@ export function ankFormValues<T extends AnkFormValues>(form: T): AnkFormOf<T> | 
 export interface AnkForm<TValues> {
     values: TValues;
     submit: (e: React.FormEvent<HTMLElement>) => void;
+    /** Clears all of the values. Resets their error mode to initial. */
     clear: () => void;
     /** Resets all of the values specified to the specified value. Other values in the form are not affected and passing `{ }` resets nothing. */
     reset: (values: Partial<AnkFormOf<TValues>>) => void;
