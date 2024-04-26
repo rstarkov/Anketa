@@ -31,7 +31,7 @@ export function TestAnketaBasicPage(): JSX.Element {
     const initialText1 = useAnkValue(null, fmtTextReq);
     const initialText2 = useAnkValue("  foo ", fmtTextReq);
 
-    const testNoErrorText = useAnkValue(null, fmtAmountReq);
+    const testNoErrorText = useAnkValue(null, fmtDateReq);
 
     function clickSet1() {
         textReq.setValue(" req  txt  ");
@@ -104,11 +104,16 @@ export function TestAnketaBasicPage(): JSX.Element {
             <Grid2 sm={6} data-testid="ank-initial-text-2-trueerr">{strTestVal(initialText2.error)}</Grid2>
         </Grid2>
 
-        <h2>Misc</h2>
-        <AnkTextField data-testid="ank-yeserrortext" ank={testNoErrorText} label="Yes error text" size="small" />
-        <AnkTextField data-testid="ank-noerrortext" ank={testNoErrorText} label="No error text" size="small" noErrorText />
-        <AnkTextField data-testid="ank-yeserrortext-hint" ank={testNoErrorText} label="Yes error text" size="small" helperText="some help" />
-        <AnkTextField data-testid="ank-noerrortext-hint" ank={testNoErrorText} label="No error text" size="small" helperText="more help" noErrorText />
+        <h2>noErrorText & setError</h2>
+        <AnkTextField data-testid="text-yeserrortext" ank={testNoErrorText} label="Yes error text" size="small" />
+        <AnkTextField data-testid="text-noerrortext" ank={testNoErrorText} label="No error text" size="small" noErrorText />
+        <AnkTextField data-testid="text-yeserrortext-hint" ank={testNoErrorText} label="Yes error text" size="small" helperText="some help" />
+        <AnkTextField data-testid="text-noerrortext-hint" ank={testNoErrorText} label="No error text" size="small" helperText="more help" noErrorText />
+        <br />
+        <AnkDateTextField data-testid="date-yeserrortext" ank={testNoErrorText} label="Yes error text" size="small" />
+        <AnkDateTextField data-testid="date-noerrortext" ank={testNoErrorText} label="No error text" size="small" noErrorText />
+        <AnkDateTextField data-testid="date-yeserrortext-hint" ank={testNoErrorText} label="Yes error text" size="small" helperText="some help" />
+        <AnkDateTextField data-testid="date-noerrortext-hint" ank={testNoErrorText} label="No error text" size="small" helperText="more help" noErrorText />
         <Button data-testid="set-yesnoerror-foobar" onClick={() => testNoErrorText.setError("Foo Bar")}>Error "Foo Bar"</Button>
         <Button data-testid="set-yesnoerror-empty" onClick={() => testNoErrorText.setError("")}>Error ""</Button>
 
