@@ -17,7 +17,7 @@ export interface AnkTextFieldProps<TValue> extends React.ComponentProps<typeof T
 /**
  * @param inputProps.maxLength may be set to "null" to disable the automatically applied limit that's based on the current format rules.
  */
-export function AnkTextField<TValue>({ ank, blankDisabled, onRawChange, noErrorText, inputProps, ...rest }: AnkTextFieldProps<TValue>): JSX.Element {
+export function AnkTextField<TValue>({ ank, blankDisabled, onRawChange, noErrorText, inputProps, onFocus, onBlur, ...rest }: AnkTextFieldProps<TValue>): JSX.Element {
     const [raw, setRaw] = useState(ank.raw);
     const [activelyEditing, setActivelyEditing] = useState(false);
     // TODO: we suppress error on focus because ank.error doesn't update as we edit - but we can still call ank.format.parse (+"required" logic)
@@ -41,12 +41,16 @@ export function AnkTextField<TValue>({ ank, blankDisabled, onRawChange, noErrorT
         if (onRawChange)
             onRawChange(e.target.value);
     }
-    function handleFocus() {
+    function handleFocus(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
         setActivelyEditing(true);
+        if (onFocus)
+            onFocus(e);
     }
-    function handleBlur() {
+    function handleBlur(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
         setActivelyEditing(false);
         commit(raw);
+        if (onBlur)
+            onBlur(e);
     }
     function handleKeyDown(e: React.KeyboardEvent) {
         if (isKey(e, "Enter")) {

@@ -36,7 +36,7 @@ interface AnkDateTextFieldProps extends React.ComponentProps<typeof TextField> {
     zIndex?: number;
 }
 
-export function AnkDateTextField({ ank, blankDisabled, onRawChange, noErrorText, preset1, preset2, zIndex, ...rest }: AnkDateTextFieldProps): JSX.Element {
+export function AnkDateTextField({ ank, blankDisabled, onRawChange, noErrorText, preset1, preset2, zIndex, onFocus, onBlur, ...rest }: AnkDateTextFieldProps): JSX.Element {
     const [raw, setRaw] = useState(ank.raw);
     const [activelyEditing, setActivelyEditing] = useState(false); // TODO: we suppress error on focus because ank.error doesn't update as we edit - but we can still call ank.format.parse (+"required" logic)
     const [open, setOpen] = useState(false);
@@ -59,12 +59,16 @@ export function AnkDateTextField({ ank, blankDisabled, onRawChange, noErrorText,
         if (onRawChange)
             onRawChange(e.target.value);
     }
-    function handleFocus() {
+    function handleFocus(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
         setActivelyEditing(true);
+        if (onFocus)
+            onFocus(e);
     }
-    function handleBlur() {
+    function handleBlur(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
         setActivelyEditing(false);
         commit();
+        if (onBlur)
+            onBlur(e);
     }
     function handleKeyDown(e: React.KeyboardEvent) {
         if (isKey(e, "Enter")) {
