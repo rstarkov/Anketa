@@ -1,4 +1,5 @@
-import { Locator, Page, expect, test } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 async function checkAnkTextbox(page: Page, testid: string, raw: string, trueval: string, error: string | undefined) {
     await expect(page.getByTestId(`${testid}-trueval`)).toHaveText(trueval);
@@ -122,15 +123,15 @@ test("AnkTextField programmatic editing", async ({ page }) => {
 test("AnkTextField drop-down behaviours", async ({ page }) => {
     await page.goto("/test/basic");
     await checkAnkDropdown(page, "ank-drop-req", "", "<undefined>", undefined);
-    await page.getByLabel('Ank Drop-down Req *').click();
-    await page.getByRole('option', { name: 'Two' }).click();
+    await page.getByLabel("Ank Drop-down Req *").click();
+    await page.getByRole("option", { name: "Two" }).click();
     await checkAnkDropdown(page, "ank-drop-req", "two", "string: two", undefined);
 
-    await page.getByTestId('clear').click();
-    await page.getByLabel('Ank Drop-down Req *').press('ArrowDown');
-    await page.getByRole('option', { name: 'One' }).press('ArrowDown');
-    await page.getByRole('option', { name: 'Two' }).press('ArrowDown');
-    await page.getByRole('option', { name: 'Three' }).press('Enter');
+    await page.getByTestId("clear").click();
+    await page.getByLabel("Ank Drop-down Req *").press("ArrowDown");
+    await page.getByRole("option", { name: "One" }).press("ArrowDown");
+    await page.getByRole("option", { name: "Two" }).press("ArrowDown");
+    await page.getByRole("option", { name: "Three" }).press("Enter");
     await checkAnkDropdown(page, "ank-drop-req", "three", "string: three", undefined);
 });
 
