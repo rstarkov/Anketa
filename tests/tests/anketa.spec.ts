@@ -1,4 +1,4 @@
-import { Page, expect, test } from "@playwright/test";
+import { Locator, Page, expect, test } from "@playwright/test";
 
 async function checkAnkTextbox(page: Page, testid: string, raw: string, trueval: string, error: string | undefined) {
     await expect(page.getByTestId(`${testid}-trueval`)).toHaveText(trueval);
@@ -190,4 +190,47 @@ test("AnkTextField noErrorText", async ({ page }) => {
     await verify("noerrortext", true, undefined);
     await verify("yeserrortext-hint", true, "Foo Bar");
     await verify("noerrortext-hint", true, "more help"); // error message set explicitly but the box has noErrorText so we see the hint instead
+});
+
+async function expectRed(inp: Locator, red: boolean) {
+    if (red) {
+        await expect(inp.locator("label.MuiInputLabel-root")).toHaveClass(/\bMui-error\b/);
+        await expect(inp.locator("p.MuiFormHelperText-root")).toBeVisible();
+    } else {
+        await expect(inp.locator("label.MuiInputLabel-root")).not.toHaveClass("Mui-error");
+        await expect(inp.locator("p.MuiFormHelperText-root")).toHaveCount(0);
+    }
+}
+
+test("DateTextField key down behaviours", async ({ page }) => {
+    await page.goto("/test/basic");
+    const inp = page.getByTestId("date1");
+
+    // enter something invalid: don't expect red right away (might change later with live validation)
+    await inp.getByRole("textbox").focus();
+    await page.keyboard.press("z");
+    await expectRed(inp, false);
+    // Enter on invalid: turns it red
+    await page.keyboard.press("Enter");
+    await expectRed(inp, true);
+    // typing after: turns off red (or live-validates if we do that later)
+    await page.keyboard.press("z");
+    await expectRed(inp, false);
+});
+
+test("DateTextField tab out error state", async ({ page }) => {
+    await page.goto("/test/basic");
+    const inp = page.getByTestId("date1");
+    await inp.getByRole("textbox").fill("31/12/2023");
+    await inp.getByRole("textbox").blur();
+    await expectRed(inp, false);
+    await inp.getByRole("textbox").fill("31/12/2023z");
+    await inp.getByRole("textbox").blur();
+    await expectRed(inp, true);
+    await inp.getByRole("textbox").focus();
+    await expectRed(inp, false); // this behaviour might change in the future, in particular if we implement live validation
+    await page.keyboard.press("Tab");
+    await expectRed(inp, true); // this behaviour might also change in the future; the input is not focused but the date button still is, so one could say the date still has focus
+    await page.keyboard.press("Tab");
+    await expectRed(inp, true); // now we're definitely out and it must be red
 });

@@ -67,7 +67,7 @@ export function TestAnketaBasicPage(): JSX.Element {
             <Grid2 sm={3} data-testid="ank-text-req-trueval">{strTestVal(textReq.value)}</Grid2>
             <Grid2 sm={6} data-testid="ank-text-req-trueerr">{strTestVal(textReq.error)}</Grid2>
 
-            <Grid2 sm={3} data-testid="ank-date-req-inp"><AnkDateTextField ank={dateReq} label="Ank Date Req" size="small" fullWidth /></Grid2>
+            <Grid2 sm={3} data-testid="ank-date-req-inp"><AnkDateTextField ank={dateReq} label="Ank Date Req" size="small" fullWidth data-testid="date1" /></Grid2>
             <Grid2 sm={3} data-testid="ank-date-req-trueval">{strTestVal(dateReq.value)}</Grid2>
             <Grid2 sm={6} data-testid="ank-date-req-trueerr">{strTestVal(dateReq.error)}</Grid2>
 

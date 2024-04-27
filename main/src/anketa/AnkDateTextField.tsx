@@ -92,13 +92,14 @@ export function AnkDateTextField({ ank, blankDisabled, onRawChange, noErrorText,
 
     return <>
         <TextField {...rest} value={blankDisabled && rest.disabled ? "" : raw} onChange={handleChange}
-            onFocus={handleFocus} onBlur={handleBlur} onKeyDown={handleKeyDown}
+            onFocus={handleFocus} onBlur={handleBlur}
             error={rest.error === undefined ? (!activelyEditing && !!ank.error) : rest.error}
             helperText={(!activelyEditing && ank.error !== undefined && !noErrorText) ? ank.error : rest.helperText}
             ref={anchorRef}
             focused={open ? true : undefined}
             required={ank.required}
             InputProps={{
+                onKeyDown: handleKeyDown,
                 endAdornment: (
                     <InputAdornment position="end" sx={{ ml: 0 }}>
                         <IconButton edge="end" onClick={() => setOpen(o => !o)} ><CalendarMonthIcon /></IconButton>
