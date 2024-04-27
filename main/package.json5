@@ -6,6 +6,7 @@
     preview: 'pnpm install && vite preview',
     fix: 'pnpm install && tsc && eslint --fix .',
     lint: 'pnpm install && eslint .',
+    test: 'pnpm install && vitest',
   },
   dependencies: {
     '@emotion/css': '^11.11.2',
@@ -30,5 +31,6 @@
     eslint: '^8.49.0',
     typescript: '5.1.6',
     vite: '^4.4.9',
+    vitest: '^1.5.2',
   },
 }

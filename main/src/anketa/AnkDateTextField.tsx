@@ -150,7 +150,7 @@ export interface AnkDateCalendarProps extends DateCalendarProps<DateTime> {
     preset2?: DatePreset;
 }
 
-export function AnkDateCalendar({ preset1, preset2, ...rest }: AnkDateCalendarProps) {
+export function AnkDateCalendar({ preset1, preset2, ...rest }: AnkDateCalendarProps): JSX.Element {
     function presetDate(p: DatePreset | undefined): DateTime | undefined {
         if (typeof p !== "string") return p; // includes undefined
         if (p == "month-start") return DateTime.now().startOf("month");
@@ -210,4 +210,54 @@ function CustomHeader(p: PickersCalendarHeaderProps<DateTime>) {
         <MonthYearDiv>{p.currentMonth.year}</MonthYearDiv>
         <IconButton onClick={() => p.onMonthChange(p.currentMonth.plus({ years: 1 }), "right")}><ChevronRightIcon /></IconButton>
     </CalendarHeaderDiv>;
+}
+
+/** Rules for partial dates are as follows. When guessing the missing parts, the guess will always match today's component(s) if the
+ * specified component(s) lies in the same direction as the guess direction. Otherwise the guessed component is incremented
+ * (in the guess direction) by exactly one unit. If the result is not a valid date then the parse fails.
+ *
+ * So the user can expect that, for example, if today is the 25th and guessing down then 1..25 will always be today's month, and
+ * 26+ will be the month before. If guessing up then 25+ is today's month, and 1..24 is the month after. In particular, if 31 is not valid
+ * in this month then that's a failed parse, even if 31 is valid in the next month.
+ *
+ * The guess direction is down, unless min is yesterday or later in which case it's up. If the resulting date is less than min the parse
+ * still succeeds; in other words min is only used to determine guess direction, not to limit the result.
+ */
+export function smartDateParse(str: string, today: DateTime, min?: DateTime, locale?: string): DateTime | undefined {
+    str = str.trim();
+    const opts = { locale: locale ?? "en-GB" };
+
+    const guessDown = min === undefined || min.toMillis() < today.startOf("day").minus({ days: 1 }).toMillis();
+
+    function guessFromDay(dd: number): DateTime | undefined {
+        const inMonth =
+            (guessDown && dd > today.day) ? today.minus({ months: 1 }) :
+                (!guessDown && dd < today.day) ? today.plus({ months: 1 }) : today;
+        const date = DateTime.fromObject({ year: inMonth.year, month: inMonth.month, day: dd }, opts);
+        return date.isValid && date.day == dd ? date : undefined;
+    }
+    function guessFromDayMonth(dd: number, mm: number): DateTime | undefined {
+        const inYear =
+            (guessDown && (mm > today.month || (mm == today.month && dd > today.day))) ? today.minus({ years: 1 }) :
+                (!guessDown && (mm < today.month || (mm == today.month && dd < today.day))) ? today.plus({ years: 1 }) : today;
+        const date = DateTime.fromObject({ year: inYear.year, month: mm, day: dd }, opts);
+        return date.isValid && date.day == dd && date.month == mm ? date : undefined;
+    }
+
+    let parsed = DateTime.fromFormat(str, "d/M/yyyy", opts);
+    if (!parsed.isValid)
+        parsed = DateTime.fromFormat(str, "d/M/yy", opts);
+    if (!parsed.isValid)
+        parsed = DateTime.fromFormat(str, "ddMMyy", opts);
+    if (!parsed.isValid) {
+        let match = str.match(/^(\d{1,2})$/); // d, dd
+        if (match) return guessFromDay(parseInt(match[1]));
+        match = str.match(/^(\d{1,2})\/(\d{1,2})$/); // d/M, dd/MM, d/MM, dd/M
+        if (match) return guessFromDayMonth(parseInt(match[1]), parseInt(match[2]));
+        match = str.match(/^(\d{2})(\d{2})$/); // ddMM
+        if (match) return guessFromDayMonth(parseInt(match[1]), parseInt(match[2]));
+    }
+    if (!parsed.isValid)
+        return undefined;
+    return parsed;
 }
