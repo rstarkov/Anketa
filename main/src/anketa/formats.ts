@@ -10,8 +10,8 @@ export class ank {
         return new NumberAnkFormat(false)._parse(message);
     }
 
-    static parseDate(locale?: string, message?: string): DateAnkFormat<boolean> {
-        return new DateAnkFormat(false)._parse(locale, message);
+    static parseDate(message?: string, startend?: "start" | "end", locale?: string): DateAnkFormat<boolean> {
+        return new DateAnkFormat(false)._parse(message, startend, locale);
     }
 
     static native<TValue>(): NativeAnkFormat<TValue, boolean> {
@@ -242,14 +242,14 @@ export class DateAnkFormat<TRequired extends boolean> extends AnkFormat<DateTime
         super(isRequired, "");
     }
 
-    _parse(locale?: string, message?: string): this {
+    _parse(message?: string, startend?: "start" | "end", locale?: string): this {
         return this.extendWith((s, fmt) => {
             s.parsed = undefined;
             s.raw = s.raw.trim();
             s.isEmpty = s.raw === "";
             if (s.isEmpty)
                 return;
-            let parsed = smartDateParse(s.raw, DateTime.now(), fmt._min, locale);;
+            const parsed = smartDateParse(s.raw, DateTime.now(), fmt._min, startend, locale);
             if (parsed === undefined) {
                 s.error = message ?? "Enter a valid date.";
                 return;

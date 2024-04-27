@@ -132,4 +132,40 @@ test("smartDateParse tests", () => {
     // potential JS parsing too eagerly
     expect(datestr(smartDateParse("7a7", now))).toBe(undefined);
     expect(datestr(smartDateParse("+7", now))).toBe(undefined);
+
+    // today, yesterday
+    now = DateTime.fromISO("2024-04-26T19:21:58.391Z");
+    expect(datestr(smartDateParse("t", now))).toBe("2024-04-26");
+    expect(datestr(smartDateParse("y", now))).toBe("2024-04-25");
+    now = DateTime.fromISO("2024-04-01T19:21:58.391Z");
+    expect(datestr(smartDateParse("t", now))).toBe("2024-04-01");
+    expect(datestr(smartDateParse("y", now))).toBe("2024-03-31");
+
+    // ISO-ish full date
+    now = DateTime.fromISO("2024-04-26T19:21:58.391Z");
+    expect(datestr(smartDateParse("2024-04-09", now))).toBe("2024-04-09");
+    expect(datestr(smartDateParse("2024-4-09", now))).toBe("2024-04-09");
+    expect(datestr(smartDateParse("2024-04-9", now))).toBe("2024-04-09");
+    expect(datestr(smartDateParse("2024-4-9", now))).toBe("2024-04-09");
+    expect(datestr(smartDateParse("24-04-09", now))).toBe("2024-04-09");
+    expect(datestr(smartDateParse("24-4-09", now))).toBe("2024-04-09");
+    expect(datestr(smartDateParse("24-04-9", now))).toBe("2024-04-09");
+    expect(datestr(smartDateParse("24-4-9", now))).toBe("2024-04-09");
+
+    // ISO-ish start date
+    expect(datestr(smartDateParse("2023-", now, undefined, "start"))).toBe("2023-01-01");
+    expect(datestr(smartDateParse("23-", now, undefined, "start"))).toBe("2023-01-01");
+    expect(datestr(smartDateParse("2023-02", now, undefined, "start"))).toBe("2023-02-01");
+    expect(datestr(smartDateParse("23-02", now, undefined, "start"))).toBe("2023-02-01");
+    expect(datestr(smartDateParse("2023-2", now, undefined, "start"))).toBe("2023-02-01");
+    expect(datestr(smartDateParse("23-2", now, undefined, "start"))).toBe("2023-02-01");
+    // ISO-ish end date
+    expect(datestr(smartDateParse("2023-", now, undefined, "end"))).toBe("2023-12-31");
+    expect(datestr(smartDateParse("23-", now, undefined, "end"))).toBe("2023-12-31");
+    expect(datestr(smartDateParse("2023-02", now, undefined, "end"))).toBe("2023-02-28");
+    expect(datestr(smartDateParse("23-02", now, undefined, "end"))).toBe("2023-02-28");
+    expect(datestr(smartDateParse("2023-2", now, undefined, "end"))).toBe("2023-02-28");
+    expect(datestr(smartDateParse("23-2", now, undefined, "end"))).toBe("2023-02-28");
+    // corner cases
+    expect(datestr(smartDateParse("223-", now, undefined, "end"))).toBe(undefined);
 });

@@ -223,7 +223,7 @@ function CustomHeader(p: PickersCalendarHeaderProps<DateTime>) {
  * The guess direction is down, unless min is yesterday or later in which case it's up. If the resulting date is less than min the parse
  * still succeeds; in other words min is only used to determine guess direction, not to limit the result.
  */
-export function smartDateParse(str: string, today: DateTime, min?: DateTime, locale?: string): DateTime | undefined {
+export function smartDateParse(str: string, today: DateTime, min?: DateTime, startend?: "start" | "end", locale?: string): DateTime | undefined {
     str = str.trim();
     const opts = { locale: locale ?? "en-GB" };
 
@@ -243,19 +243,43 @@ export function smartDateParse(str: string, today: DateTime, min?: DateTime, loc
         const date = DateTime.fromObject({ year: inYear.year, month: mm, day: dd }, opts);
         return date.isValid && date.day == dd && date.month == mm ? date : undefined;
     }
+    function startendYear(yy: number): DateTime | undefined {
+        const result = DateTime.fromObject({ year: yy > 100 ? yy : (2000 + yy), month: startend == "start" ? 1 : 12, day: startend == "start" ? 1 : 31 }, opts);
+        return result.isValid ? result : undefined;
+    }
+    function startendMonth(yy: number, mm: number): DateTime | undefined {
+        if (yy < 100) yy += 2000;
+        let result = DateTime.fromObject({ year: yy, month: mm, day: 15 }, opts);
+        result = (startend == "start" ? result.startOf("month") : result.endOf("month")).startOf("day");
+        return result.isValid ? result : undefined;
+    }
 
     let parsed = DateTime.fromFormat(str, "d/M/yyyy", opts);
     if (!parsed.isValid)
         parsed = DateTime.fromFormat(str, "d/M/yy", opts);
     if (!parsed.isValid)
         parsed = DateTime.fromFormat(str, "ddMMyy", opts);
+    if (!parsed.isValid)
+        parsed = DateTime.fromFormat(str, "yyyy-M-d", opts);
+    if (!parsed.isValid)
+        parsed = DateTime.fromFormat(str, "yy-M-d", opts);
     if (!parsed.isValid) {
+        if (str == "t" || str == "T") return today.startOf("day");
+        if (str == "y" || str == "Y") return today.startOf("day").minus({ days: 1 });
+
         let match = str.match(/^(\d{1,2})$/); // d, dd
         if (match) return guessFromDay(parseInt(match[1]));
         match = str.match(/^(\d{1,2})\/(\d{1,2})$/); // d/M, dd/MM, d/MM, dd/M
         if (match) return guessFromDayMonth(parseInt(match[1]), parseInt(match[2]));
         match = str.match(/^(\d{2})(\d{2})$/); // ddMM
         if (match) return guessFromDayMonth(parseInt(match[1]), parseInt(match[2]));
+
+        if (startend == "start" || startend == "end") {
+            match = str.match(/^(\d{2}|\d{4})-$/); // yyyy-, yy-
+            if (match) return startendYear(parseInt(match[1]));
+            match = str.match(/^(\d{2}|\d{4})-(\d{1,2})$/); // yyyy-M, yy-M, yyyy-MM, yy-MM
+            if (match) return startendMonth(parseInt(match[1]), parseInt(match[2]));
+        }
     }
     if (!parsed.isValid)
         return undefined;
