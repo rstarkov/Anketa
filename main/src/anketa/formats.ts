@@ -25,8 +25,8 @@ export abstract class AnkFormat<TValue, TRaw, TRequired extends boolean> {
     public readonly empty: TRaw;
 
     _requiredError: string | undefined;
-    _min: TValue | undefined;
-    _max: TValue | undefined;
+    _min: (() => TValue) | undefined;
+    _max: (() => TValue) | undefined;
 
     constructor(isRequired: TRequired, empty: TRaw) {
         this.#transformer = s => { };
@@ -205,7 +205,7 @@ export class NumberAnkFormat<TRequired extends boolean> extends AnkFormat<number
             if (s.parsed < min)
                 s.error = message ?? `Enter a value greater than or equal to ${this.serialise(min).raw}.`;
         });
-        clone._min = min;
+        clone._min = () => min;
         return clone;
     }
 
@@ -216,7 +216,7 @@ export class NumberAnkFormat<TRequired extends boolean> extends AnkFormat<number
             if (s.parsed > max)
                 s.error = message ?? `Enter a value less than or equal to ${this.serialise(max).raw}.`;
         });
-        clone._max = max;
+        clone._max = () => max;
         return clone;
     }
 
@@ -249,7 +249,7 @@ export class DateAnkFormat<TRequired extends boolean> extends AnkFormat<DateTime
             s.isEmpty = s.raw === "";
             if (s.isEmpty)
                 return;
-            const parsed = smartDateParse(s.raw, DateTime.now(), fmt._min, startend, locale);
+            const parsed = smartDateParse(s.raw, DateTime.now(), fmt._min?.(), startend, locale);
             if (parsed === undefined) {
                 s.error = message ?? "Enter a valid date.";
                 return;
@@ -262,34 +262,34 @@ export class DateAnkFormat<TRequired extends boolean> extends AnkFormat<DateTime
         return this.parse(val.toFormat("dd/MM/yyyy"));
     }
 
-    min(min: DateTime, message?: string): this {
+    min(min: () => DateTime, message?: string): this {
         const clone = this.extendWith(s => {
             if (s.error !== undefined || s.parsed === undefined || s.isEmpty)
                 return;
-            if (s.parsed.startOf("day") < min.startOf("day"))
-                s.error = message ?? `Must be no earlier than ${this.serialise(min).raw}.`;
+            if (s.parsed.startOf("day") < min().startOf("day"))
+                s.error = message ?? `Must be no earlier than ${this.serialise(min()).raw}.`;
         });
         clone._min = min;
         return clone;
     }
 
-    max(max: DateTime, message?: string): this {
+    max(max: () => DateTime, message?: string): this {
         const clone = this.extendWith(s => {
             if (s.error !== undefined || s.parsed === undefined || s.isEmpty)
                 return;
-            if (s.parsed.startOf("day") > max.startOf("day"))
-                s.error = message ?? `Must be no later than ${this.serialise(max).raw}.`;
+            if (s.parsed.startOf("day") > max().startOf("day"))
+                s.error = message ?? `Must be no later than ${this.serialise(max()).raw}.`;
         });
         clone._max = max;
         return clone;
     }
 
     minToday(message?: string): this {
-        return this.max(DateTime.now().startOf("day"), message ?? "Must be no earlier than today.");
+        return this.min(() => DateTime.now().startOf("day"), message ?? "Must be no earlier than today.");
     }
 
     maxToday(message?: string): this {
-        return this.max(DateTime.now().startOf("day"), message ?? "Must be no later than today.");
+        return this.max(() => DateTime.now().startOf("day"), message ?? "Must be no later than today.");
     }
 }
 
