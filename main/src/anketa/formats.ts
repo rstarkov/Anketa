@@ -1,4 +1,5 @@
 import { DateTime } from "luxon";
+import { smartDateParse } from "./AnkDateTextField";
 
 export class ank {
     static parseString(emptyUndefined?: boolean): StringAnkFormat<boolean> {
@@ -242,17 +243,14 @@ export class DateAnkFormat<TRequired extends boolean> extends AnkFormat<DateTime
     }
 
     _parse(locale?: string, message?: string): this {
-        return this.extendWith(s => {
+        return this.extendWith((s, fmt) => {
             s.parsed = undefined;
             s.raw = s.raw.trim();
             s.isEmpty = s.raw === "";
             if (s.isEmpty)
                 return;
-            const opts = { locale: locale ?? "en-GB" };
-            let parsed = DateTime.fromFormat(s.raw, "d/M/yyyy", opts);
-            if (!parsed.isValid)
-                parsed = DateTime.fromFormat(s.raw, "d/M/yy", opts);
-            if (!parsed.isValid) {
+            let parsed = smartDateParse(s.raw, DateTime.now(), fmt._min, locale);;
+            if (parsed === undefined) {
                 s.error = message ?? "Enter a valid date.";
                 return;
             }
