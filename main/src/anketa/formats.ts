@@ -19,7 +19,7 @@ export class ank {
 }
 
 export abstract class AnkFormat<TValue, TRaw, TRequired extends boolean> {
-    #transformer: TransformerFunc<TValue, TRaw>;
+    #transformer: TransformerFunc<TValue, TRaw, unknown>;
     #isRequired: TRequired;
     public readonly empty: TRaw;
 
@@ -36,15 +36,15 @@ export abstract class AnkFormat<TValue, TRaw, TRequired extends boolean> {
     public get isRequired(): TRequired { return this.#isRequired; }
     protected set isRequired(value: TRequired) { this.#isRequired = value; }
 
-    extendWith(transformer: TransformerFunc<TValue, TRaw>): this {
+    extendWith(transformer: TransformerFunc<TValue, TRaw, this>): this {
         const extended = new (this.constructor as any)(this.#isRequired) as this; // eslint-disable-line @typescript-eslint/no-unsafe-call
         for (const key in this)
             if (Object.hasOwn(this, key))
                 extended[key] = this[key];
         const oldTransformers = this.#transformer;
-        extended.#transformer = (s: ParseSerialise<TValue, TRaw>) => {
-            oldTransformers(s);
-            transformer(s);
+        extended.#transformer = (s: ParseSerialise<TValue, TRaw>, fmt: unknown) => {
+            oldTransformers(s, fmt);
+            transformer(s, fmt as this);
         };
         return extended;
     }
@@ -63,7 +63,7 @@ export abstract class AnkFormat<TValue, TRaw, TRequired extends boolean> {
             parsed: undefined,
             isEmpty: true,
         };
-        this.#transformer(state);
+        this.#transformer(state, this);
         return state;
     }
 
@@ -312,7 +312,7 @@ export class NativeAnkFormat<TValue, TRequired extends boolean> extends AnkForma
     }
 }
 
-type TransformerFunc<TValue, TRaw> = (state: ParseSerialise<TValue, TRaw>) => void;
+type TransformerFunc<TValue, TRaw, TThis> = (state: ParseSerialise<TValue, TRaw>, fmt: TThis) => void;
 
 export interface ParseSerialise<TValue, TRaw> {
     raw: TRaw;
