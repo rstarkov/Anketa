@@ -29,16 +29,24 @@ export interface AnkValue<TValue, TRaw, TReq extends boolean = boolean> extends 
 }
 
 export interface AnkValueOptions {
-    /** If the parse results in an error, the default behaviour is to set value to undefined. This option instead leaves the value unchanged. An empty parse (even required) still sets the value to undefined. */
-    preserveValueOnError?: boolean;
+    /** Determines what happens to the value state when a raw input is parsed with an error.
+     *
+     * * `"default"` (or `undefined`) sets the exact value returned by the format, which is usually `undefined` only if raw can't be parsed, otherwise the value state updates even if validations consider it invalid.
+     * * `"unchanged"`: value state remains unchanged whenever raw value parses with an error (including validation errors), except empty parse which sets the value state to `undefined` even if required.
+     * * `"undefined"`: value state is set to `undefined` every time there's an error, including validation errors; only an error-free parse sets the value state to the parse result. */
+    valueOnError?: "default" | "unchanged" | "undefined"; // other ideas for names: "when-parseable" for default, "undefined-always" for "undefined"?
+    useState?: UseStateFunc<any>;
 }
+
+export type UseStateFunc<T> = (initialValueFunc: () => T) => [value: T, setValue: (newValue: T) => void];
 
 /**
  * @param defaultValue Initial value for the control. "null" is handled specially to specify that the control should start empty.
  * @param initialFormat Initial format for the control. Can be changed later via setFormat. DO NOT construct the format inline on every render! Store it in a const or memo.
  */
 export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TValue | null, initialFormat: AnkFormat<TValue, TRaw, TReq>, opts?: AnkValueOptions): AnkValue<TValue, TRaw, TReq> {
-    const [result, internalSetResult] = useState(() => defaultValue === null ? initialFormat.parse(initialFormat.empty) : initialFormat.serialise(defaultValue));
+    const use: UseStateFunc<ParseSerialise<TValue, TRaw>> = opts?.useState ?? useState;
+    const [result, internalSetResult] = use(() => defaultValue === null ? initialFormat.parse(initialFormat.empty) : initialFormat.serialise(defaultValue));
     const [errorMode, internalSetErrorMode] = useState<AnkErrorMode>("initial"); // later: config to use "dirty" optionally
     const [format, _setFormat] = useState(initialFormat);
 
@@ -64,10 +72,13 @@ export function useAnkValue<TValue, TRaw, TReq extends boolean>(defaultValue: TV
         const p = format.parse(newraw);
         if (p.error !== undefined) {
             // we have some kind of an error - leave raw as the format returned it
-            if (!opts?.preserveValueOnError)
+            const valueOnError = opts?.valueOnError ?? "default";
+            if (valueOnError == "default")
                 _setState(p, undefined);
-            else
+            else if (valueOnError == "unchanged")
                 _setState({ ...p, parsed: result.parsed }, undefined);
+            else if (valueOnError == "undefined")
+                _setState({ ...p, parsed: undefined }, undefined);
         } else if (p.parsed !== undefined) {
             // parsed to a non-empty value - re-serialise to fix up the raw value per the format
             const ps = format.serialise(p.parsed);
