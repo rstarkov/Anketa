@@ -18,7 +18,7 @@ import type { AnkValueBase } from "./value";
 
 // TODO: use MUI @mui/x-date-pickers date adapters instead of hard-coding luxon
 
-type DatePreset = "month-start" | "month-end" | "prev-month-start" | "prev-month-end" | "year-start" | "year-end" | "prev-year-start" | "prev-year-end" | DateTime;
+type DatePreset = "month-start" | "month-end" | "prev-month-start" | "prev-month-end" | "prev2-month-end" | "year-start" | "year-end" | "prev-year-start" | "prev-year-end" | DateTime;
 
 interface AnkDateTextFieldProps extends React.ComponentProps<typeof TextField> {
     ank: AnkValueBase<DateTime, string>;
@@ -158,6 +158,7 @@ export function AnkDateCalendar({ preset1, preset2, ...rest }: AnkDateCalendarPr
         if (p == "month-end") return DateTime.now().startOf("month").plus({ months: 1 }).plus({ days: -1 });
         if (p == "prev-month-start") return DateTime.now().startOf("month").plus({ months: -1 });
         if (p == "prev-month-end") return DateTime.now().startOf("month").plus({ days: -1 });
+        if (p == "prev2-month-end") return DateTime.now().startOf("month").plus({ months: -1 }).plus({ days: -1 });
         if (p == "year-start") return DateTime.now().startOf("year");
         if (p == "year-end") return DateTime.now().startOf("year").plus({ years: 1 }).plus({ days: -1 });
         if (p == "prev-year-start") return DateTime.now().startOf("year").plus({ years: -1 });
