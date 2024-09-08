@@ -121,7 +121,7 @@ export class StringAnkFormat<TRequired extends boolean> extends AnkFormat<string
         const clone = this.extendWith(s => {
             if (s.error !== undefined || s.parsed === undefined || s.isEmpty)
                 return;
-            if (s.parsed.length > min)
+            if (s.parsed.length < min)
                 s.error = message ?? `Minimum ${min} characters.`;
         });
         clone._minLen = min;
