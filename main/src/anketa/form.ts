@@ -1,3 +1,5 @@
+// This file is distributed under the MIT License.
+
 import { useEffect, useRef, useState } from "react";
 import type { AnkValueBase } from "./value";
 import type { _ } from "./shared";

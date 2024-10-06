@@ -1,3 +1,5 @@
+// This file is distributed under the MIT License.
+
 import { useState } from "react";
 import type { AnkFormat, ParseSerialise } from "./formats";
 

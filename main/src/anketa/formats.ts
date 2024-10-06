@@ -1,3 +1,5 @@
+// This file is distributed under the MIT License.
+
 import { DateTime } from "luxon";
 import { smartDateParse } from "./AnkDateTextField";
 

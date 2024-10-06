@@ -1,3 +1,5 @@
+// This file is distributed under the MIT License.
+
 import { useCallback, useEffect, useRef } from "react";
 
 /* from yup - this seems to force TS to show the full type instead of all the wrapped generics. See also https://github.com/microsoft/vscode/issues/94679 and https://stackoverflow.com/a/57683652/2010616 */

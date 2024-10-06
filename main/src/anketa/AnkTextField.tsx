@@ -1,3 +1,5 @@
+// This file is distributed under the MIT License.
+
 import { TextField } from "@mui/material";
 import { useEffect, useState } from "react";
 import { isStringLikeFormat } from ".";
